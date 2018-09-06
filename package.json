@@ -1,0 +1,18 @@
+{
+  "name": "factorio-mods-localization",
+  "version": "0.0.1",
+  "description": "Service for easy configuration factorio mods translation on Crowdin",
+  "main": "index.js",
+  "repository": "https://github.com/dima74/factorio-mods-localization-helper",
+  "author": "Dmitry Murzin <murzin.da@phystech.edu>",
+  "engines": {
+    "node": "10"
+  },
+  "dependencies": {
+    "@octokit/rest": "^15.11.1",
+    "download-git-repo": "^1.0.2",
+    "express": "^4.16.3",
+    "express-github-webhook": "^1.0.6",
+    "github-app": "^3.2.0"
+  }
+}
