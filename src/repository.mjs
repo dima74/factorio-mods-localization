@@ -2,12 +2,19 @@ import fs from 'fs';
 import path from 'path';
 
 export default class Repository {
-    constructor(path) {
-        this.path = path;
+    constructor({owner, repo}, directoryPath) {
+        this.owner = owner;
+        this.repo = repo;
+        // this.directoryPath = directoryPath;
+        this.localeEnPath = path.join(directoryPath, 'locale/en');
     }
 
     checkForLocaleFolder() {
-        const localeEnPath = path.join(this.path, 'locale/en');
-        return fs.existsSync(localeEnPath);
+        return fs.existsSync(this.localeEnPath);
+    }
+
+    listEnglishFiles() {
+        const filesNames = fs.readdirSync(this.localeEnPath);
+        return filesNames.map(fileName => path.join(this.localeEnPath, fileName));
     }
 }

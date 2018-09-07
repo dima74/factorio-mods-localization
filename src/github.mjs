@@ -51,7 +51,7 @@ class Installation {
         // await download(archiveUrl, ROOT, { extract: true, strip: 1, mode: '666', headers: { accept: 'application/zip' } });
         const destinationDirectory = path.join(ROOT, uuid.v4());
         await download(archiveUrl, destinationDirectory, { extract: true, strip: 1, mode: '666', headers: { accept: 'application/zip' } });
-        return new Repository(destinationDirectory);
+        return new Repository({owner, repo}, destinationDirectory);
     }
 
     async getDefaultBranch({ owner, repo }) {

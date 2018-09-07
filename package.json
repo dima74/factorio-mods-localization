@@ -14,6 +14,7 @@
     "download-git-repo": "^1.1.0",
     "express": "^4.16.3",
     "express-github-webhook": "^1.0.6",
+    "form-data": "^2.3.2",
     "github-app": "^4.0.1",
     "uuid": "^3.3.2"
   }
