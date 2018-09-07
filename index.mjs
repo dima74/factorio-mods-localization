@@ -1,6 +1,6 @@
 import github from './src/github';
 import webhooks from './src/webhooks';
-import './base';
+import './src/base';
 
 async function init() {
     await github.init();

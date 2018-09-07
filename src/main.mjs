@@ -1,15 +1,23 @@
-import crowdin from "./crowdin";
+import crowdin from './crowdin';
+import github from './github';
 
 class Main {
-    onRepositoriesAdded(repositories) {
+    async onRepositoriesAdded(installationId, repositories) {
+        const installation = await github.getInstallation(installationId);
         for (const repository of repositories) {
-            this.onRepositoryAdded(repository);
+            await this.onRepositoryAdded(installation, repository);
         }
     }
 
-    onRepositoryAdded(repository) {
-        console.log(repository.id, repository.full_name);
-        crowdin.
+    async onRepositoryAdded(installation, repositoryInfo) {
+        const fullName = repositoryInfo.full_name;
+        console.log('Add repository', fullName);
+        const repository = await installation.downloadRepository(fullName);
+        if (!repository.checkForLocaleFolder()) {
+            throw new Error('no /locale folder in github repository');
+        }
+        crowdin.createDirectory(fullName);
+        console.log('Successfully added', fullName);
     }
 }
 

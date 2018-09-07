@@ -18,13 +18,9 @@ async function init() {
     // });
 
     function onInstallationRepositories(repo, data) {
-        console.log('installation_repositories');
-        main.onRepositoriesAdded(data.repositories_added);
+        main.onRepositoriesAdded(data.installation.id, data.repositories_added);
     }
 
-    // note: github somewhy doesn't send `installation_repositories` event
-    // todo remove deprecated `integration_installation_repositories` event when github will fix it
-    webhookHandler.on('integration_installation_repositories', onInstallationRepositories);
     webhookHandler.on('installation_repositories', onInstallationRepositories);
 }
 
