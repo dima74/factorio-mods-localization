@@ -16,6 +16,7 @@
     "express-github-webhook": "^1.0.6",
     "form-data": "^2.3.2",
     "github-app": "^4.0.1",
+    "lodash.isequal": "^4.5.0",
     "uuid": "^3.3.2"
   }
 }

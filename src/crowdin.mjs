@@ -5,7 +5,8 @@ import FormData from 'form-data';
 import assert from 'assert';
 
 class Crowdin {
-    constructor() {
+    constructor(repository) {
+        this.repository = repository;
         const projectId = process.env.CROWDIN_PROJECT_ID;
         const apiKey = process.env.CROWDIN_API_KEY;
         if (!projectId || !apiKey) {
@@ -32,22 +33,32 @@ class Crowdin {
         });
     }
 
-    getCrowdinDirectoryName({ owner, repo }) {
+    async onRepositoryAdded() {
+        this.createRepositoryDirectory();
+        await this.addEnglishFiles();
+        await this.addAllLocalizations();
+    }
+
+    get crowdinDirectoryName() {
+        const { owner, repo } = this.repository;
         return `${repo} (${owner})`;
     }
 
-    getCrowdinFilePath(repository, filePath) {
-        const directoryName = this.getCrowdinDirectoryName(repository);
+    getCrowdinFilePath(filePath) {
+        const directoryName = this.crowdinDirectoryName;
         // todo handle other case
         assert(filePath.endsWith('.cfg'));
         const fileName = path.basename(filePath).replace('.cfg', '.ini');
         return `${directoryName}/${fileName}`;
     }
 
-    async createRepositoryDirectory(repository) {
-        const name = this.getCrowdinDirectoryName(repository);
+    async createRepositoryDirectory() {
         try {
-            await this.axios.post('/add-directory', null, { params: { name, recursive: 1 } });
+            const params = {
+                name: this.crowdinDirectoryName,
+                recursive: 1,
+            };
+            await this.axios.post('/add-directory', null, { params });
         } catch (error) {
             if (error.response && error.response.data && error.response.data.error && error.response.data.error.code === 50) {
                 // todo uncomment
@@ -59,21 +70,39 @@ class Crowdin {
         }
     }
 
-    async addEnglishFiles(repository) {
-        for (const filePath of repository.listEnglishFiles()) {
-            await this.addEnglishFile(repository, filePath);
+    async addEnglishFiles() {
+        for (const filePath of this.repository.getEnglishFiles()) {
+            await this.addEnglishFile(filePath);
         }
     }
 
-    async addEnglishFile(repository, filePath) {
+    async postLocalizationFile(urlPath, filePath, params = {}) {
         const form = new FormData();
-        const crowdinFilePath = this.getCrowdinFilePath(repository, filePath);
+        const crowdinFilePath = this.getCrowdinFilePath(filePath);
+        console.log(`Upload file, ${urlPath}, ${crowdinFilePath}`);
         form.append(`files[${crowdinFilePath}]`, fs.createReadStream(filePath));
         const headers = form.getHeaders();
-        const params = { type: 'ini' };
-        const response = await this.axios.post('/add-file', form, { headers, params });
+        await this.axios.post(urlPath, form, { headers, params });
+    }
+
+    async addEnglishFile(filePath) {
+        await this.postLocalizationFile('/add-file', filePath);
+    }
+
+    async addAllLocalizations() {
+        const localizations = this.repository.getLocalizations();
+        for (const localization of Object.entries(localizations)) {
+            await this.addLocalization(localization);
+        }
+    }
+
+    async addLocalization(localization) {
+        const [languageCode, filesPaths] = localization;
+        const params = { language: languageCode, auto_approve_imported: 1 };
+        for (const filePath of filesPaths) {
+            await this.postLocalizationFile('/upload-translation', filePath, params);
+        }
     }
 }
 
-const crowdin = new Crowdin();
-export default crowdin;
+export default Crowdin;
