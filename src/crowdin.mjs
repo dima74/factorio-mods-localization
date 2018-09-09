@@ -44,12 +44,10 @@ class Crowdin {
         return `${repo} (${owner})`;
     }
 
-    getCrowdinFilePath(filePath) {
+    getCrowdinFileInfo(filePath) {
         const directoryName = this.crowdinDirectoryName;
-        // todo handle other case
-        assert(filePath.endsWith('.cfg'));
         const fileName = path.basename(filePath).replace('.cfg', '.ini');
-        return `${directoryName}/${fileName}`;
+        return [`${directoryName}/${fileName}`, fileName];
     }
 
     async createRepositoryDirectory() {
@@ -78,11 +76,11 @@ class Crowdin {
 
     async postLocalizationFile(urlPath, filePath, params = {}) {
         const form = new FormData();
-        const crowdinFilePath = this.getCrowdinFilePath(filePath);
+        const [crowdinFilePath, crowdinFileName] = this.getCrowdinFileInfo(filePath);
         console.log(`Upload file, ${urlPath}, ${crowdinFilePath}`);
-        form.append(`files[${crowdinFilePath}]`, fs.createReadStream(filePath));
+        form.append(`files[${crowdinFilePath}]`, fs.createReadStream(filePath), crowdinFileName);
         const headers = form.getHeaders();
-        await this.axios.post(urlPath, form, { headers, params });
+        return await this.axios.post(urlPath, form, { headers, params });
     }
 
     async addEnglishFile(filePath) {
@@ -98,9 +96,33 @@ class Crowdin {
 
     async addLocalization(localization) {
         const [languageCode, filesPaths] = localization;
-        const params = { language: languageCode, auto_approve_imported: 1 };
         for (const filePath of filesPaths) {
-            await this.postLocalizationFile('/upload-translation', filePath, params);
+            if (!filePath.endsWith('.cfg') && !filePath.endsWith('.ini')) {
+                console.warn('Locale file with unknown extension:', path.basename(filePath));
+                continue;
+            }
+            await this.addTranslatedFile(languageCode, filePath);
+        }
+    }
+
+    async addTranslatedFile(languageCode, filePath) {
+        const params = { language: languageCode, auto_approve_imported: 1 };
+        const response = await this.postLocalizationFile('/upload-translation', filePath, params);
+
+        // check that all files have status 'uploaded'
+        for (const [fileName, fileStatus] of Object.entries(response.data.files)) {
+            if (fileStatus !== 'uploaded') {
+                throw new Error(`Error during uploading file "${fileName}", status: ${fileStatus}`);
+            }
+        }
+    }
+
+    // for debug
+    async deleteAllDirectories() {
+        const info = (await this.axios.post('/info')).data;
+        for (const directory of info.files) {
+            const params = { name: directory.name };
+            await this.axios.post('/delete-directory', null, { params });
         }
     }
 }

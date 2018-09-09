@@ -10,18 +10,16 @@ async function init() {
     app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
     app.use(bodyParser.json());
 
-    const webhookHandler = GithubWebHook({path: '/webhook'});
+    const webhookHandler = GithubWebHook({ path: '/webhook' });
     app.use(webhookHandler);
 
     // webhookHandler.on('*', function (event, repo, data) {
     //     console.log(event, repo, data);
     // });
 
-    function onInstallationRepositories(repo, data) {
+    webhookHandler.on('installation_repositories', (repo, data) => {
         main.onRepositoriesAdded(data.installation.id, data.repositories_added);
-    }
-
-    webhookHandler.on('installation_repositories', onInstallationRepositories);
+    });
 }
 
-export default {init};
+export default { init };

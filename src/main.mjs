@@ -13,9 +13,7 @@ class Main {
         const fullName = repositoryInfo.full_name;
         console.log('\nAdd repository', fullName);
         const repository = await installation.downloadRepository(fullName);
-        if (!repository.checkForLocaleFolder()) {
-            throw new Error('no /locale folder found in github repository');
-        }
+        repository.checkForLocaleFolder();
         const crowdin = new Crowdin(repository);
         await crowdin.onRepositoryAdded();
         console.log('Successfully added', fullName);

@@ -46,6 +46,10 @@ class Installation {
 
     async downloadRepository(fullName) {
         const [owner, repo] = fullName.split('/');
+        if (process.env.NODE_ENV === 'development' && fullName === 'dima74/factorio-mod-example') {
+            return new Repository({owner, repo}, path.join(ROOT, '../../factorio-mod-example'));
+        }
+
         const defaultBranch = await this.getDefaultBranch({ owner, repo });
         const archiveUrl = `https://github.com/${owner}/${repo}/archive/${defaultBranch}.zip`;
         // await download(archiveUrl, ROOT, { extract: true, strip: 1, mode: '666', headers: { accept: 'application/zip' } });
