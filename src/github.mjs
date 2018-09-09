@@ -6,29 +6,17 @@ import { ROOT } from './constants';
 import uuid from 'uuid';
 import Repository from './repository';
 
-// async function f(installationId) {
-//     const api = await app.asInstallation(installationId);
-//     const repositories = await api.apps.getInstallationRepositories({});
-//     console.log(repositories.data.repositories);
-// }
-//
-// (async function main() {
-//     const api = await app.asApp();
-//     const installations = await api.apps.getInstallations({});
-//     await f(installations.data[0].id);
-// })();
-
 class GitHub {
     async init() {
         const id = process.env.GITHUB_APP_ID;
-        const cert = process.env.GITHUB_APP_PRIVATE_KEY;
+        const cert = process.env.GITHUB_APP_PRIVATE_KEY.replace(/\\n/g, '\n');
 
         if (!id || !cert) {
             console.error('Environment variables GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY must be set');
             process.exit(1);
         }
 
-        this.apiHelper = createApp({ id, cert: cert.replace(/\\n/g, '\n') });
+        this.apiHelper = createApp({ id, cert});
         // this.apiHelper = createApp({id: 13052, cert: fs.readFileSync('private/private-key.pem')});
         this.api = await this.apiHelper.asApp();
     }
