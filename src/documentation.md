@@ -33,7 +33,7 @@
 1. Git push
 
 ## Notes
-* We need to run some code every week (update github from crowdin). Standart Heroku scheduler mechanism is unreliable, costly or difficult to setup. But Heroku forces our app to restart approximately every 24 hours. So we just can run necessary code on app startup.
+* We need to run some code every week (update github from crowdin). Standard Heroku scheduler mechanism is really very bad (unreliable, costly and difficult to setup). But Heroku forces our app to restart approximately every 24 hours. So we can just run necessary code on app startup. We would store in postgresql (built-in heroku database) updates time, and on startup checks, if last update time is more than week ago (if so, do udpate).
 
 * Research: can we make our dyno not sleep if we will every minute send request from our app to itself (via https://factorio-mods-localization.herokuapp.com/)?
 

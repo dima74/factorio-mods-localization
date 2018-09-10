@@ -29,6 +29,6 @@ async function pushRepositoryCrowdinChangesToGithub() {
 }
 
 // onRepositoriesAdded();
-pushAllCrowdinChangesToGithub();
+// pushAllCrowdinChangesToGithub();
 // pushRepositoryCrowdinChangesToGithub();
 // crowdinApi.downloadAllTranlations();

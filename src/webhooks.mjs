@@ -1,12 +1,18 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import main from './main';
 import GithubWebHook from 'express-github-webhook';
+import main from './main';
+import database from './database';
 
 async function init() {
     const PORT = process.env.PORT || 5000;
     const app = express();
     app.get('/', (req, res) => res.send('It works!'));
+    app.get('/updates', async (req, res, next) => {
+        res.type('text/plain');
+        res.send(await database.getUpdatesInfo());
+        next();
+    });
     app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
     app.use(bodyParser.json());
 
