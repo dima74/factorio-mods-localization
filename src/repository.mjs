@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import git from 'simple-git/promise';
-import { GITHUB_COMMIT_AUTHOR, GITHUB_COMMIT_MESSAGE } from './constants';
+import { GITHUB_COMMIT_MESSAGE, GITHUB_COMMIT_USER_NAME, GITHUB_COMMIT_USER_EMAIL } from './constants';
 
 function getDirectoryFilesPaths(directory) {
     const dirents = fs.readdirSync(directory, { withFileTypes: true });
@@ -40,11 +40,14 @@ export default class Repository {
     }
 
     async pushAllChanges() {
-        this.git.add('.');
-        const areChangesExists = (await this.git.status()).files.length > 0;
+        const git = this.git;
+        await git.addConfig('user.name', GITHUB_COMMIT_USER_NAME);
+        await git.addConfig('user.email', GITHUB_COMMIT_USER_EMAIL);
+        await git.add('.');
+        const areChangesExists = (await git.status()).files.length > 0;
         if (areChangesExists) {
-            this.git.commit(GITHUB_COMMIT_MESSAGE, { '--author': GITHUB_COMMIT_AUTHOR });
-            this.git.push();
+            await git.commit(GITHUB_COMMIT_MESSAGE);
+            await git.push();
         }
         return areChangesExists;
     }
