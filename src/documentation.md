@@ -19,7 +19,13 @@
 
 ## Update github from crowdin (for each repository) 
 1. Create installation token
-1. Clone repository https://x-access-token:TOKEN@github.com/OWNER/REPO.git
+
+    https://octokit.github.io/rest.js/#api-Apps-createInstallationToken
+
+1. Clone repository `https://x-access-token:TOKEN@github.com/OWNER/REPO.git`
+
+    https://developer.github.com/apps/building-github-apps/authenticating-with-github-apps/#http-based-git-access-by-an-installation
+
 1. For each language:
     * download tar from crowdin
     * extract to cloned directory
@@ -27,6 +33,10 @@
 1. Git push
 
 ## Notes
+* We need to run some code every week (update github from crowdin). Standart Heroku scheduler mechanism is unreliable, costly or difficult to setup. But Heroku forces our app to restart approximately every 24 hours. So we just can run necessary code on app startup.
+
+* Research: can we make our dyno not sleep if we will every minute send request from our app to itself (via https://factorio-mods-localization.herokuapp.com/)?
+
 * Any localization folder (such as `/locale/en`, `/locale/ru`) may contain subfolder, and we should ignore subfolders, because factorio ignores them too. Here is [example](https://github.com/Karosieben/boblocale/tree/master/locale/en/old).
 
 * In some mods files names doesn't match across localization folders

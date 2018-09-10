@@ -10,8 +10,7 @@ const repositories = [{
     full_name: 'dima74/factorio-mod-example',
     private: false,
 }];
-const owner = 'dima74';
-const repo = 'factorio-mod-example';
+const fullName = 'dima74/factorio-mod-example';
 
 async function onRepositoriesAdded() {
     await crowdinApi.deleteAllDirectories();
@@ -26,9 +25,10 @@ async function pushAllCrowdinChangesToGithub() {
 
 async function pushRepositoryCrowdinChangesToGithub() {
     await github.init();
-    await main.pushRepositoryCrowdinChangesToGithub({ installationId, owner, repo });
+    await main.pushRepositoryCrowdinChangesToGithub({ installationId, fullName });
 }
 
 // onRepositoriesAdded();
-// pushAllCrowdinChangesToGithub();
-pushRepositoryCrowdinChangesToGithub();
+pushAllCrowdinChangesToGithub();
+// pushRepositoryCrowdinChangesToGithub();
+// crowdinApi.downloadAllTranlations();

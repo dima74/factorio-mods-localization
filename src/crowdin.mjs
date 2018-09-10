@@ -2,24 +2,29 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import FormData from 'form-data';
+import { ROOT } from './constants';
+import uuid from 'uuid';
+import download from 'download';
+import { deleteEmptyIniFiles } from './utility';
 
-function getCrowdinDirectoryName({ owner, repo }) {
+export function getCrowdinDirectoryName(fullName) {
+    const [owner, repo] = fullName.split('/');
     return `${repo} (${owner})`;
 }
 
 class CrowdinApi {
     constructor() {
-        const projectId = process.env.CROWDIN_PROJECT_ID;
-        const apiKey = process.env.CROWDIN_API_KEY;
-        if (!projectId || !apiKey) {
+        this.projectId = process.env.CROWDIN_PROJECT_ID;
+        this.apiKey = process.env.CROWDIN_API_KEY;
+        if (!this.projectId || !this.apiKey) {
             console.error('Environment variables CROWDIN_PROJECT_ID and CROWDIN_API_KEY must be set');
             process.exit(1);
         }
         this.axios = axios.create({
             // baseURL: 'https://httpbin.org/post',
-            baseURL: `https://api.crowdin.com/api/project/${projectId}`,
+            baseURL: `https://api.crowdin.com/api/project/${this.projectId}`,
             params: {
-                key: apiKey,
+                key: this.apiKey,
                 json: true,
             },
         });
@@ -46,7 +51,23 @@ class CrowdinApi {
 
     async filterRepositories(repositories) {
         const directoriesNames = await this.getAllDirectoriesNames();
-        return repositories.filter(repository => directoriesNames.includes(getCrowdinDirectoryName(repository)));
+        return repositories.filter(repository => directoriesNames.includes(getCrowdinDirectoryName(repository.fullName)));
+    }
+
+    async exportTranslations() {
+        const response = (await this.axios.get('/export')).data;
+        if (!response.success || response.success.status !== 'built') {
+            console.warn('[crowdin] export translations has no effect (no changes since last export)');
+        }
+    }
+
+    async downloadAllTranlations() {
+        await this.exportTranslations();
+        const url = `https://api.crowdin.com/api/project/${this.projectId}/download/all.zip?key=${this.apiKey}`;
+        const destinationDirectory = path.join(ROOT, uuid.v4());
+        await download(url, destinationDirectory, { extract: true });
+        await deleteEmptyIniFiles(destinationDirectory);
+        return destinationDirectory;
     }
 
     // for debug
@@ -62,7 +83,7 @@ class CrowdinDirectory {
     constructor(axios, repository) {
         this.axios = axios;
         this.repository = repository;
-        this.directoryName = getCrowdinDirectoryName(repository);
+        this.directoryName = getCrowdinDirectoryName(repository.fullName);
     }
 
     async onRepositoryAdded() {

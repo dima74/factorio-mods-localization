@@ -1,5 +1,6 @@
 import github from './github';
 import crowdinApi from './crowdin';
+import { moveTranslatedFilesToRepository } from './utility';
 
 class Main {
     async onRepositoriesAdded(installationId, repositories) {
@@ -12,7 +13,7 @@ class Main {
     async onRepositoryAdded(installation, repositoryInfo) {
         const fullName = repositoryInfo.full_name;
         console.log('\nAdd repository', fullName);
-        const repository = await installation.downloadRepository(fullName);
+        const repository = await installation.cloneRepository(fullName);
         repository.checkForLocaleFolder();
         const crowdin = crowdinApi.getCrowdinDirectory(repository);
         await crowdin.onRepositoryAdded();
@@ -22,18 +23,19 @@ class Main {
     async pushAllCrowdinChangesToGithub() {
         const repositories = await github.getAllRepositories();
         const repositoriesFiltered = await crowdinApi.filterRepositories(repositories);
-        for (const repository of repositories) {
-            await this.pushRepositoryCrowdinChangesToGithub(repository);
+        const translationsDirectory = await crowdinApi.downloadAllTranlations();
+        for (const repository of repositoriesFiltered) {
+            await this.pushRepositoryCrowdinChangesToGithub(translationsDirectory, repository);
         }
     }
 
-    async pushRepositoryCrowdinChangesToGithub(repository /* { installationId, owner, repo } */) {
-        const response = await github.api.apps.createInstallationToken({ installation_id: repository.installationId });
-        const token = response.data.token;
-        console.log(token);
-
-        import git from 'simple-git/promise';
-        await git().clone(`https://x-access-token:${token}@github.com/${owner}/${repo}.git`, ROOT + uuid.v4());
+    async pushRepositoryCrowdinChangesToGithub(translationsDirectory, { installation, fullName }) {
+        const repository = await installation.cloneRepository(fullName);
+        await moveTranslatedFilesToRepository(translationsDirectory, repository);
+        const areChangesExists = await repository.pushAllChanges();
+        if (areChangesExists) {
+            console.log('Successfully pushed', fullName);
+        }
     }
 }
 

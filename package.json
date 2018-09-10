@@ -11,12 +11,15 @@
   "dependencies": {
     "@octokit/rest": "^15.11.1",
     "axios": "^0.18.0",
+    "download": "^7.1.0",
     "download-git-repo": "^1.1.0",
     "express": "^4.16.3",
     "express-github-webhook": "^1.0.6",
     "form-data": "^2.3.2",
+    "fs-extra": "^7.0.0",
     "github-app": "^4.0.1",
     "lodash.isequal": "^4.5.0",
+    "recursive-readdir": "^2.2.2",
     "simple-git": "^1.96.0",
     "uuid": "^3.3.2"
   }

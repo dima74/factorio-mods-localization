@@ -1,10 +1,10 @@
 import createApp from 'github-app';
-import download from 'download';
 import process from 'process';
 import path from 'path';
 import { ROOT } from './constants';
 import uuid from 'uuid';
 import Repository from './repository';
+import git from 'simple-git/promise';
 
 class GitHub {
     async init() {
@@ -17,7 +17,6 @@ class GitHub {
         }
 
         this.apiHelper = createApp({ id, cert });
-        // this.apiHelper = createApp({id: 13052, cert: fs.readFileSync('private/private-key.pem')});
         this.api = await this.apiHelper.asApp();
     }
 
@@ -26,20 +25,23 @@ class GitHub {
         return new Installation(id, installationApi);
     }
 
+    async getInstallationToken(id) {
+        const response = await this.api.apps.createInstallationToken({ installation_id: id });
+        return response.data.token;
+    }
+
     async getInstallationRepositories(id) {
         const installation = await this.getInstallation(id);
         return await installation.getRepositories();
     }
 
-    async getAllRepositories() /* [{installationId, owner, repo}...] */ {
+    async getAllRepositories() /* [{installation, fullName}...] */ {
         // todo pagination
         const installations = (await this.api.apps.getInstallations({ per_page: 100 })).data;
         const installationsRepositoriesPromises = installations.map(installation => this.getInstallationRepositories(installation.id));
         const installationsRepositories = await Promise.all(installationsRepositoriesPromises);
         return [].concat(...installationsRepositories);
     }
-
-
 }
 
 class Installation {
@@ -48,31 +50,22 @@ class Installation {
         this.api = api;
     }
 
-    async downloadRepository(fullName) {
-        const [owner, repo] = fullName.split('/');
+    async cloneRepository(fullName) {
         if (process.env.NODE_ENV === 'development' && fullName === 'dima74/factorio-mod-example') {
-            return new Repository({ owner, repo }, path.join(ROOT, '../../factorio-mod-example'));
+            // return new Repository(fullName, path.join(ROOT, '../../factorio-mod-example'));
         }
 
-        const defaultBranch = await this.getDefaultBranch({ owner, repo });
-        const archiveUrl = `https://github.com/${owner}/${repo}/archive/${defaultBranch}.zip`;
-        // await download(archiveUrl, ROOT, { extract: true, strip: 1, mode: '666', headers: { accept: 'application/zip' } });
+        const token = await github.getInstallationToken(this.id);
+        const repoPath = `https://x-access-token:${token}@github.com/${fullName}.git`;
         const destinationDirectory = path.join(ROOT, uuid.v4());
-        await download(archiveUrl, destinationDirectory, { extract: true, strip: 1, mode: '666', headers: { accept: 'application/zip' } });
-        return new Repository({ owner, repo }, destinationDirectory);
-    }
-
-    async getDefaultBranch({ owner, repo }) {
-        return (await this.api.repos.get({ owner, repo })).data.default_branch;
+        await git().clone(repoPath, destinationDirectory, ['--depth', '1']);
+        return new Repository(fullName, destinationDirectory);
     }
 
     async getRepositories() {
         const response = await this.api.apps.getInstallationRepositories({ per_page: 100 });
         const repositories = response.data.repositories;
-        return repositories.map(({ full_name }) => {
-            const [owner, repo] = full_name.split('/');
-            return { installationId: this.id, owner, repo };
-        });
+        return repositories.map(({ full_name }) => ({ installation: this, fullName: full_name }));
     }
 }
 

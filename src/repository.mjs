@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import git from 'simple-git/promise';
+import { GITHUB_COMMIT_AUTHOR, GITHUB_COMMIT_MESSAGE } from './constants';
 
 function getDirectoryFilesPaths(directory) {
     const dirents = fs.readdirSync(directory, { withFileTypes: true });
@@ -9,11 +11,11 @@ function getDirectoryFilesPaths(directory) {
 }
 
 export default class Repository {
-    constructor({ owner, repo }, directoryPath) {
-        this.owner = owner;
-        this.repo = repo;
+    constructor(fullName, directoryPath) {
+        this.fullName = fullName;
         this.localesPath = path.join(directoryPath, 'locale');
         this.localeEnPath = path.join(this.localesPath, 'en');
+        this.git = git(directoryPath);
     }
 
     checkForLocaleFolder() {
@@ -35,5 +37,15 @@ export default class Repository {
             }
         }
         return localizations;
+    }
+
+    async pushAllChanges() {
+        this.git.add('.');
+        const areChangesExists = (await this.git.status()).files.length > 0;
+        if (areChangesExists) {
+            this.git.commit(GITHUB_COMMIT_MESSAGE, { '--author': GITHUB_COMMIT_AUTHOR });
+            this.git.push();
+        }
+        return areChangesExists;
     }
 }
