@@ -2,11 +2,13 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import FormData from 'form-data';
-import assert from 'assert';
 
-class Crowdin {
-    constructor(repository) {
-        this.repository = repository;
+function getCrowdinDirectoryName({ owner, repo }) {
+    return `${repo} (${owner})`;
+}
+
+class CrowdinApi {
+    constructor() {
         const projectId = process.env.CROWDIN_PROJECT_ID;
         const apiKey = process.env.CROWDIN_API_KEY;
         if (!projectId || !apiKey) {
@@ -33,27 +35,51 @@ class Crowdin {
         });
     }
 
+    getCrowdinDirectory(repository) {
+        return new CrowdinDirectory(this.axios, repository);
+    }
+
+    async getAllDirectoriesNames() {
+        const info = (await this.axios.post('/info')).data;
+        return info.files.map(directory => directory.name);
+    }
+
+    async filterRepositories(repositories) {
+        const directoriesNames = await this.getAllDirectoriesNames();
+        return repositories.filter(repository => directoriesNames.includes(getCrowdinDirectoryName(repository)));
+    }
+
+    // for debug
+    async deleteAllDirectories() {
+        for (const name of await this.getAllDirectoriesNames()) {
+            const params = { name };
+            await this.axios.post('/delete-directory', null, { params });
+        }
+    }
+}
+
+class CrowdinDirectory {
+    constructor(axios, repository) {
+        this.axios = axios;
+        this.repository = repository;
+        this.directoryName = getCrowdinDirectoryName(repository);
+    }
+
     async onRepositoryAdded() {
-        this.createRepositoryDirectory();
+        await this.createRepositoryDirectory();
         await this.addEnglishFiles();
         await this.addAllLocalizations();
     }
 
-    get crowdinDirectoryName() {
-        const { owner, repo } = this.repository;
-        return `${repo} (${owner})`;
-    }
-
     getCrowdinFileInfo(filePath) {
-        const directoryName = this.crowdinDirectoryName;
         const fileName = path.basename(filePath).replace('.cfg', '.ini');
-        return [`${directoryName}/${fileName}`, fileName];
+        return [`${this.directoryName}/${fileName}`, fileName];
     }
 
     async createRepositoryDirectory() {
         try {
             const params = {
-                name: this.crowdinDirectoryName,
+                name: this.directoryName,
                 recursive: 1,
             };
             await this.axios.post('/add-directory', null, { params });
@@ -116,15 +142,7 @@ class Crowdin {
             }
         }
     }
-
-    // for debug
-    async deleteAllDirectories() {
-        const info = (await this.axios.post('/info')).data;
-        for (const directory of info.files) {
-            const params = { name: directory.name };
-            await this.axios.post('/delete-directory', null, { params });
-        }
-    }
 }
 
-export default Crowdin;
+const crowdinApi = new CrowdinApi();
+export default crowdinApi;

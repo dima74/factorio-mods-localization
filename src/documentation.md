@@ -1,13 +1,30 @@
-## Actions after adding github app to repository
+## App responsibilities
+1. Webhook for app installation: create subfolder in crowdin
+1. Every week: update github from crowdin
+1. Webhook for every push to update crowdin from github
+
+## Adding github app to repository
 1. Download github repository (just files, without .git folder)
 1. Check for `/locale` and `/locale/en`
 1. Crowdin: 
     * api/add-directory
     * for each file in `/locale/en`: api/add-file
     * for each other `/locale` subfolder
-        * for each subfolder file: api/upload-translation
-1. Set up every week update github from crowdin
-1. Set up webhook for every push to update crowdin from github
+        * for each subfolder file: api/upload-translation 
+
+## Update github from crowdin (general)
+1. Get list of all repositories for which github app is installed
+1. Filter list to contain only repositories which also are presented on crowdin
+1. Update github from crowdin (for each repository)
+
+## Update github from crowdin (for each repository) 
+1. Create installation token
+1. Clone repository https://x-access-token:TOKEN@github.com/OWNER/REPO.git
+1. For each language:
+    * download tar from crowdin
+    * extract to cloned directory
+1. Make git commit (or break if there are no changes)
+1. Git push
 
 ## Notes
 * Any localization folder (such as `/locale/en`, `/locale/ru`) may contain subfolder, and we should ignore subfolders, because factorio ignores them too. Here is [example](https://github.com/Karosieben/boblocale/tree/master/locale/en/old).

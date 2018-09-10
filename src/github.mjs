@@ -16,26 +16,42 @@ class GitHub {
             process.exit(1);
         }
 
-        this.apiHelper = createApp({ id, cert});
+        this.apiHelper = createApp({ id, cert });
         // this.apiHelper = createApp({id: 13052, cert: fs.readFileSync('private/private-key.pem')});
         this.api = await this.apiHelper.asApp();
     }
 
     async getInstallation(id) {
         const installationApi = await this.apiHelper.asInstallation(id);
-        return new Installation(installationApi);
+        return new Installation(id, installationApi);
     }
+
+    async getInstallationRepositories(id) {
+        const installation = await this.getInstallation(id);
+        return await installation.getRepositories();
+    }
+
+    async getAllRepositories() /* [{installationId, owner, repo}...] */ {
+        // todo pagination
+        const installations = (await this.api.apps.getInstallations({ per_page: 100 })).data;
+        const installationsRepositoriesPromises = installations.map(installation => this.getInstallationRepositories(installation.id));
+        const installationsRepositories = await Promise.all(installationsRepositoriesPromises);
+        return [].concat(...installationsRepositories);
+    }
+
+
 }
 
 class Installation {
-    constructor(api) {
+    constructor(id, api) {
+        this.id = id;
         this.api = api;
     }
 
     async downloadRepository(fullName) {
         const [owner, repo] = fullName.split('/');
         if (process.env.NODE_ENV === 'development' && fullName === 'dima74/factorio-mod-example') {
-            return new Repository({owner, repo}, path.join(ROOT, '../../factorio-mod-example'));
+            return new Repository({ owner, repo }, path.join(ROOT, '../../factorio-mod-example'));
         }
 
         const defaultBranch = await this.getDefaultBranch({ owner, repo });
@@ -43,11 +59,20 @@ class Installation {
         // await download(archiveUrl, ROOT, { extract: true, strip: 1, mode: '666', headers: { accept: 'application/zip' } });
         const destinationDirectory = path.join(ROOT, uuid.v4());
         await download(archiveUrl, destinationDirectory, { extract: true, strip: 1, mode: '666', headers: { accept: 'application/zip' } });
-        return new Repository({owner, repo}, destinationDirectory);
+        return new Repository({ owner, repo }, destinationDirectory);
     }
 
     async getDefaultBranch({ owner, repo }) {
         return (await this.api.repos.get({ owner, repo })).data.default_branch;
+    }
+
+    async getRepositories() {
+        const response = await this.api.apps.getInstallationRepositories({ per_page: 100 });
+        const repositories = response.data.repositories;
+        return repositories.map(({ full_name }) => {
+            const [owner, repo] = full_name.split('/');
+            return { installationId: this.id, owner, repo };
+        });
     }
 }
 

@@ -18,7 +18,7 @@ export default class Repository {
 
     checkForLocaleFolder() {
         if (!fs.existsSync(this.localeEnPath)) {
-            throw new Error('no /locale folder found in github repository');
+            throw new Error(`no /locale folder found in github repository, ${this.localeEnPath}`);
         }
     }
 

@@ -1,21 +1,34 @@
 import main from './main';
 import github from './github';
-import Crowdin from './crowdin';
+import crowdinApi from './crowdin';
 import './base';
 
-async function onRepositoriesAdded() {
-    await new Crowdin(null).deleteAllDirectories();
+const installationId = 207362;
+const repositories = [{
+    id: 121222864,
+    name: 'factorio-mod-example',
+    full_name: 'dima74/factorio-mod-example',
+    private: false,
+}];
+const owner = 'dima74';
+const repo = 'factorio-mod-example';
 
-    const installationId = 207362;
-    const repositories = [{
-        id: 121222864,
-        name: 'factorio-mod-example',
-        full_name: 'dima74/factorio-mod-example',
-        private: false,
-    }];
+async function onRepositoriesAdded() {
+    await crowdinApi.deleteAllDirectories();
     await github.init();
     await main.onRepositoriesAdded(installationId, repositories);
 }
 
-process.env.NODE_ENV = 'development';
-onRepositoriesAdded();
+async function pushAllCrowdinChangesToGithub() {
+    await github.init();
+    await main.pushAllCrowdinChangesToGithub();
+}
+
+async function pushRepositoryCrowdinChangesToGithub() {
+    await github.init();
+    await main.pushRepositoryCrowdinChangesToGithub({ installationId, owner, repo });
+}
+
+// onRepositoriesAdded();
+// pushAllCrowdinChangesToGithub();
+pushRepositoryCrowdinChangesToGithub();
