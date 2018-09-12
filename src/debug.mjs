@@ -38,4 +38,4 @@ async function onPushWebhook() {
 // pushAllCrowdinChangesToGithub();
 // pushRepositoryCrowdinChangesToGithub();
 // crowdinApi.downloadAllTranlations();
-onPushWebhook();
+// onPushWebhook();

@@ -1,12 +1,12 @@
 import github from './src/github';
-import webhooks from './src/webhooks';
+import webServer from './src/webServer';
 import main from './src/main';
 import database from './src/database';
 import './src/base';
 
 async function init() {
     await github.init();
-    await webhooks.init();
+    await webServer.init();
     await database.init();
 
     if (await database.isLastUpdateLongEnough()) {

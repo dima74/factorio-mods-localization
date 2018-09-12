@@ -37,6 +37,8 @@ class Main {
         const areChangesExists = await repository.pushAllChanges();
         if (areChangesExists) {
             console.log(`[update-github-from-crowdin] [${fullName}] pushed`);
+        } else {
+            console.log(`[update-github-from-crowdin] [${fullName}] no changes found`);
         }
     }
 
@@ -47,7 +49,7 @@ class Main {
             .filter(file => file.startsWith('locale/en'))
             .map(file => file.substring('locale/en/'.length));
         if (modifiedLocaleEnFiles.length === 0) {
-            console.log(`[push-webhook] [${data.repository.full_name}] no modified/added files found`);
+            console.log(`[push-webhook] [${data.repository.full_name}] no modified/added english files found`);
             return;
         }
 

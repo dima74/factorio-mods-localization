@@ -1,7 +1,7 @@
 import createApp from './github-app-auth-helper';
 import process from 'process';
 import path from 'path';
-import { ROOT } from './constants';
+import { IS_DEVELOPMENT, ROOT } from './constants';
 import uuid from 'uuid';
 import Repository from './repository';
 import git from 'simple-git/promise';
@@ -58,7 +58,7 @@ class Installation {
     }
 
     async cloneRepository(fullName) {
-        if (process.env.NODE_ENV === 'development' && fullName === 'dima74/factorio-mod-example') {
+        if (IS_DEVELOPMENT && fullName === 'dima74/factorio-mod-example') {
             // return new Repository(fullName, '/home/dima/IdeaProjects/factorio/factorio-mod-example1');
         }
 

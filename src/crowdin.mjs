@@ -86,9 +86,13 @@ class CrowdinApi {
     // for debug
     async deleteAllDirectories() {
         for (const name of await this.getAllDirectoriesNames()) {
-            const params = { name };
-            await this.axios.post('/delete-directory', null, { params });
+            await this.deleteDirectory(name);
         }
+    }
+
+    async deleteDirectory(name) {
+        const params = { name };
+        await this.axios.post('/delete-directory', null, { params });
     }
 }
 

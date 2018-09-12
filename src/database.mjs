@@ -1,5 +1,5 @@
 import pg from 'pg';
-import { CROWDIN_TO_GITHUB_UPDATE_PERIOD_MILLISECONDS } from './constants';
+import { CROWDIN_TO_GITHUB_UPDATE_PERIOD_MILLISECONDS, IS_DEVELOPMENT } from './constants';
 import moment from 'moment';
 
 const QUERY_CREATE_TABLE_IF_NOT_EXISTS = `
@@ -21,7 +21,7 @@ VALUES (current_timestamp)
 
 class Database {
     async init() {
-        const config = process.env.NODE_ENV === 'development'
+        const config = IS_DEVELOPMENT
             ? { user: 'postgres', database: 'postgres' }
             : { connectionString: process.env.DATABASE_URL, ssl: true };
         this.client = new pg.Client(config);
