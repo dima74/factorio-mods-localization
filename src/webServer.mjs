@@ -5,7 +5,7 @@ import GithubWebHook from 'express-github-webhook';
 import main from './main';
 import database from './database';
 import { IS_DEVELOPMENT } from './constants';
-import crowdinApi from './crowdin';
+import crowdinApi, { getCrowdinDirectoryName } from './crowdin';
 
 class WebServer {
     init() {
@@ -69,7 +69,8 @@ class WebServer {
 
     async deleteCrowdinExampleDirectory(req, res, next) {
         try {
-            await crowdinApi.deleteDirectory('factorio-mod-example (dima74)');
+            const crowdinName = getCrowdinDirectoryName('dima74/factorio-mod-example');
+            await crowdinApi.deleteDirectory(crowdinName);
             res.type('text/plain').send('OK');
             next();
         } catch (error) {

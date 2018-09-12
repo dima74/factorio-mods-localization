@@ -5,12 +5,13 @@ import FormData from 'form-data';
 import uuid from 'uuid';
 import download from 'download';
 import assert from 'assert';
+import Case from 'case';
 import { ROOT } from './constants';
 import { deleteEmptyIniFiles } from './utility';
 
 export function getCrowdinDirectoryName(fullName) {
     const [owner, repo] = fullName.split('/');
-    return `${repo} (${owner})`;
+    return `${Case.capital(repo)} (${owner})`;
 }
 
 export function replaceIniToCfg(fileName) {
@@ -141,7 +142,7 @@ class CrowdinDirectory {
     async postLocalizationFile(urlPath, filePath, params = {}) {
         const form = new FormData();
         const [crowdinFilePath, crowdinFileName] = this.getCrowdinFileInfo(filePath);
-        console.log(`[${this.repository.fullName}] Upload file, ${urlPath}, ${crowdinFilePath}`);
+        console.log(`[${this.repository.fullName}] crowdin${urlPath}: ${params.language || 'en'}/${crowdinFileName}`);
         form.append(`files[${crowdinFilePath}]`, fs.createReadStream(filePath), crowdinFileName);
         const headers = form.getHeaders();
         return await this.axios.post(urlPath, form, { headers, params });
