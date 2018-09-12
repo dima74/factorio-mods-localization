@@ -1,29 +1,29 @@
-# Service for easy configuration factorio mods translation on Crowdin
+# Translate your Factorio mod easily with power of Crowdin
 
-# Short description
+## Description
+We provide service for simplify [Factorio](https://www.factorio.com/) mods translation. You only need to install [our GitHub app][1]. After this the following actions will be performed automatically:
+
+* All existing english strings of your mod will be uploaded to [Crowdin](https://crowdin.com/)
+* All existing translations will be uploaded too
+* Every week our [FactorioBot](https://github.com/factorio-mods-helper) will fetch translations updates from Crowdin and commit them to your repository
+
+## Motivation
 TODO
 
-# Motivation
-TODO
+## Installation
+1. Go to our [GitHub app page][1]
+2. Click install button
+3. Choose your repositories with factorio mods
+4. Click install button
 
-# Usage
-TODO
+You are done! Now share link to [this Crowdin project](https://crowdin.com/project/factorio-mods-localization) with translators
 
-# How it works
+## Detail description of how it works
 0. Mod author has mod repository on GitHub
 1. Mod author installs GitHub app (for his mod repository)
 2. Our service creates subdirectory in our Crowdin project and upload original strings and existing translations into it
 3. Every week our service take strings from Crowdin and make commit to GitHub repository (if there are any changes)
 4. Every time original (locale/en) strings are changed, our service changes appropriate strings on Crowdin 
 
-# Things to consider
-* в идеале сделать для каждого мода отдельный проект на Crowdin
-    - надо уточнить, доступно ли для open source license неограниченное число проектов
-    - подумать над тем, чтобы для каждого мода отправлять заявку на open source license
-* папка с модом может быть подпапкой репозитория
-* репозиторий может содержать несколько модов (каждый в своей подпапке)
-    - как обрабатывать переименование подпапок?
-* могут ли меняться идентификаторы строк (при сохранении исходной строки и переводов)?
-* как обрабатывать изменение исходной строки?
-* стоит ли разрешать редактирование переводов на GitHub (с последующим переносом на Crowdin (и как этот перенос реализовать в случае конфликтов))?
-* что будет если автор мода удалит приложение и заново установит?
+
+  [1]: https://github.com/apps/factorio-mods-localization-helper
