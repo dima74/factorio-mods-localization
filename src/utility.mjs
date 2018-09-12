@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import assert from 'assert';
 import recursiveReaddir from 'recursive-readdir';
-import { getCrowdinDirectoryName } from './crowdin';
+import { getCrowdinDirectoryName, replaceCfgToIni, replaceIniToCfg } from './crowdin';
 
 export async function deleteEmptyIniFiles(directory) {
     const files = await recursiveReaddir(directory);
@@ -36,10 +36,15 @@ export async function moveTranslatedFilesToRepository(translationsDirectory, rep
         }
         await Promise.all(files.map(file => {
             assert(file.endsWith('.ini'));
-            const fileRenamed = file.replace(/.ini$/, '.cfg');
+            const fileRenamed = replaceIniToCfg(file);
             const oldPath = path.join(languagePathCrowdin, file);
             const newPath = path.join(languagePathRepository, fileRenamed);
             return fs.rename(oldPath, newPath);
         }));
     }
+}
+
+export function getAllModifiedAndAddedFiles(commits) {
+    const commitsFiles = commits.map(commit => [...commit.added, ...commit.modified]);
+    return [].concat(...commitsFiles);
 }

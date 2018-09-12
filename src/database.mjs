@@ -23,10 +23,7 @@ class Database {
     async init() {
         const config = process.env.NODE_ENV === 'development'
             ? { user: 'postgres', database: 'postgres' }
-            : {
-                connectionString: process.env.DATABASE_URL,
-                ssl: true,
-            };
+            : { connectionString: process.env.DATABASE_URL, ssl: true };
         this.client = new pg.Client(config);
 
         await this.client.connect();

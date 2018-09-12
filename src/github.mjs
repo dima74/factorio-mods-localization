@@ -1,4 +1,4 @@
-import createApp from 'github-app';
+import createApp from './github-app-auth-helper';
 import process from 'process';
 import path from 'path';
 import { ROOT } from './constants';
@@ -17,7 +17,12 @@ class GitHub {
         }
 
         this.apiHelper = createApp({ id, cert });
-        this.api = await this.apiHelper.asApp();
+    }
+
+    async getApi() {
+        // max jwtTokenLifetime for github is 10 minutes (so we can't generate token once at app startup)
+        const jwtTokenLifetime = 10 * 60;
+        return await this.apiHelper.asApp(jwtTokenLifetime);
     }
 
     async getInstallation(id) {
@@ -26,7 +31,8 @@ class GitHub {
     }
 
     async getInstallationToken(id) {
-        const response = await this.api.apps.createInstallationToken({ installation_id: id });
+        const api = await this.getApi();
+        const response = await api.apps.createInstallationToken({ installation_id: id });
         return response.data.token;
     }
 
@@ -37,7 +43,8 @@ class GitHub {
 
     async getAllRepositories() /* [{installation, fullName}...] */ {
         // todo pagination
-        const installations = (await this.api.apps.getInstallations({ per_page: 100 })).data;
+        const api = await this.getApi();
+        const installations = (await api.apps.getInstallations({ per_page: 100 })).data;
         const installationsRepositoriesPromises = installations.map(installation => this.getInstallationRepositories(installation.id));
         const installationsRepositories = await Promise.all(installationsRepositoriesPromises);
         return [].concat(...installationsRepositories);
@@ -52,7 +59,7 @@ class Installation {
 
     async cloneRepository(fullName) {
         if (process.env.NODE_ENV === 'development' && fullName === 'dima74/factorio-mod-example') {
-            // return new Repository(fullName, path.join(ROOT, '../../factorio-mod-example'));
+            // return new Repository(fullName, '/home/dima/IdeaProjects/factorio/factorio-mod-example1');
         }
 
         const token = await github.getInstallationToken(this.id);

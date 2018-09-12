@@ -7,10 +7,10 @@
 1. Download github repository (just files, without .git folder)
 1. Check for `/locale` and `/locale/en`
 1. Crowdin: 
-    * api/add-directory
-    * for each file in `/locale/en`: api/add-file
+    * crowdin-api/add-directory
+    * for each file in `/locale/en`: crowdin-api/add-file
     * for each other `/locale` subfolder
-        * for each subfolder file: api/upload-translation 
+        * for each subfolder file: crowdin-api/upload-translation 
 
 ## Update github from crowdin (general)
 1. Get list of all repositories for which github app is installed
@@ -32,6 +32,14 @@
 1. Make git commit (or break if there are no changes)
 1. Git push
 
+## Webhook for every push to update crowdin from github
+1. Check if pushed commits change /locale/en (Note that payload for push webhook contains added/modified/removed files)
+1. For every modified/added file:
+    * check if we have same file on crowdin:
+        * yes: crowdin-api/update-file
+        * no: crowdin-api/add-file
+1. (Note that for now we will not handle file removing) 
+
 ## Notes
 * We need to run some code every week (update github from crowdin). Standard Heroku scheduler mechanism is really very bad (unreliable, costly and difficult to setup). But Heroku forces our app to restart approximately every 24 hours. So we can just run necessary code on app startup. We would store in postgresql (built-in heroku database) updates time, and on startup checks, if last update time is more than week ago (if so, do udpate).
 
@@ -49,3 +57,7 @@
     We researched >1000 mods and it turns out that only 8% of them has unmatched files names in different languages directories
 
     So for now we decided to support only matched files names in different languages (mod author has to rename languages files if their names don't match)
+
+* Logs format:
+
+        [action-name] [repository-name] comment

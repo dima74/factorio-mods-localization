@@ -1,7 +1,8 @@
+import './base';
 import main from './main';
 import github from './github';
 import crowdinApi from './crowdin';
-import './base';
+import pushPayload from './temp/pushPayload';
 
 const installationId = 207362;
 const repositories = [{
@@ -12,10 +13,10 @@ const repositories = [{
 }];
 const fullName = 'dima74/factorio-mod-example';
 
-async function onRepositoriesAdded() {
+async function onRepositoriesAddedWebhook() {
     await crowdinApi.deleteAllDirectories();
     await github.init();
-    await main.onRepositoriesAdded(installationId, repositories);
+    await main.onRepositoriesAddedWebhook(installationId, repositories);
 }
 
 async function pushAllCrowdinChangesToGithub() {
@@ -28,7 +29,13 @@ async function pushRepositoryCrowdinChangesToGithub() {
     await main.pushRepositoryCrowdinChangesToGithub({ installationId, fullName });
 }
 
-// onRepositoriesAdded();
+async function onPushWebhook() {
+    await github.init();
+    await main.onPushWebhook(pushPayload);
+}
+
+// onRepositoriesAddedWebhook();
 // pushAllCrowdinChangesToGithub();
 // pushRepositoryCrowdinChangesToGithub();
 // crowdinApi.downloadAllTranlations();
+onPushWebhook();

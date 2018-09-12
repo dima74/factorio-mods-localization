@@ -2,14 +2,23 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import FormData from 'form-data';
-import { ROOT } from './constants';
 import uuid from 'uuid';
 import download from 'download';
+import assert from 'assert';
+import { ROOT } from './constants';
 import { deleteEmptyIniFiles } from './utility';
 
 export function getCrowdinDirectoryName(fullName) {
     const [owner, repo] = fullName.split('/');
     return `${repo} (${owner})`;
+}
+
+export function replaceIniToCfg(fileName) {
+    return fileName.replace(/.ini$/, '.cfg');
+}
+
+export function replaceCfgToIni(fileName) {
+    return fileName.replace(/.cfg$/, '.ini');
 }
 
 class CrowdinApi {
@@ -44,8 +53,12 @@ class CrowdinApi {
         return new CrowdinDirectory(this.axios, repository);
     }
 
+    async getProjectInfo() {
+        return (await this.axios.post('/info')).data;
+    }
+
     async getAllDirectoriesNames() {
-        const info = (await this.axios.post('/info')).data;
+        const info = await this.getProjectInfo();
         return info.files.map(directory => directory.name);
     }
 
@@ -93,7 +106,7 @@ class CrowdinDirectory {
     }
 
     getCrowdinFileInfo(filePath) {
-        const fileName = path.basename(filePath).replace('.cfg', '.ini');
+        const fileName = replaceCfgToIni(path.basename(filePath));
         return [`${this.directoryName}/${fileName}`, fileName];
     }
 
@@ -124,7 +137,7 @@ class CrowdinDirectory {
     async postLocalizationFile(urlPath, filePath, params = {}) {
         const form = new FormData();
         const [crowdinFilePath, crowdinFileName] = this.getCrowdinFileInfo(filePath);
-        console.log(`Upload file, ${urlPath}, ${crowdinFilePath}`);
+        console.log(`[${this.repository.fullName}] Upload file, ${urlPath}, ${crowdinFilePath}`);
         form.append(`files[${crowdinFilePath}]`, fs.createReadStream(filePath), crowdinFileName);
         const headers = form.getHeaders();
         return await this.axios.post(urlPath, form, { headers, params });
@@ -132,6 +145,10 @@ class CrowdinDirectory {
 
     async addEnglishFile(filePath) {
         await this.postLocalizationFile('/add-file', filePath);
+    }
+
+    async updateEnglishFile(filePath) {
+        await this.postLocalizationFile('/update-file', filePath, { update_option: 'update_as_unapproved' });
     }
 
     async addAllLocalizations() {
@@ -160,6 +177,23 @@ class CrowdinDirectory {
         for (const [fileName, fileStatus] of Object.entries(response.data.files)) {
             if (fileStatus !== 'uploaded') {
                 throw new Error(`Error during uploading file "${fileName}", status: ${fileStatus}`);
+            }
+        }
+    }
+
+    async updateFilesOnCrowdin(filesNames) {
+        const info = await crowdinApi.getProjectInfo();
+        const crowdinDirectory = info.files.find(file => file.name === this.directoryName);
+        assert(crowdinDirectory);
+        const crowdinFiles = crowdinDirectory.files.map(file => file.name);
+
+        // todo Promise.all
+        for (const fileName of filesNames) {
+            const filePath = path.join(this.repository.localeEnPath, fileName);
+            if (crowdinFiles.includes(replaceCfgToIni(fileName))) {
+                await this.updateEnglishFile(filePath);
+            } else {
+                await this.addEnglishFile(filePath);
             }
         }
     }

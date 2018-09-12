@@ -24,7 +24,11 @@ async function init() {
     // });
 
     webhookHandler.on('installation_repositories', (repo, data) => {
-        main.onRepositoriesAdded(data.installation.id, data.repositories_added);
+        main.onRepositoriesAddedWebhook(data.installation.id, data.repositories_added);
+    });
+
+    webhookHandler.on('push', (repo, data) => {
+        main.onPushWebhook(data);
     });
 }
 
