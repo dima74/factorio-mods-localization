@@ -1,5 +1,14 @@
 # Service for easy configuration factorio mods translation on Crowdin
 
+# Short description
+TODO
+
+# Motivation
+TODO
+
+# Usage
+TODO
+
 # How it works
 0. Mod author has mod repository on GitHub
 1. Mod author installs GitHub app (for his mod repository)
