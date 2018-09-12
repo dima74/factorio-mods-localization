@@ -14,7 +14,7 @@ class Main {
         const fullName = repositoryInfo.full_name;
         console.log(`\n[add-repository] [${fullName}] starting...`);
         const repository = await installation.cloneRepository(fullName);
-        repository.checkForLocaleFolder();
+        await repository.checkForLocaleFolder();
         const crowdin = crowdinApi.getCrowdinDirectory(repository);
         await crowdin.onRepositoryAdded();
         console.log(`[add-repository] [${fullName}] success`);

@@ -133,7 +133,7 @@ class CrowdinDirectory {
     }
 
     async addEnglishFiles() {
-        for (const filePath of this.repository.getEnglishFiles()) {
+        for (const filePath of await this.repository.getEnglishFiles()) {
             await this.addEnglishFile(filePath);
         }
     }
@@ -156,7 +156,7 @@ class CrowdinDirectory {
     }
 
     async addAllLocalizations() {
-        const localizations = this.repository.getLocalizations();
+        const localizations = await this.repository.getLocalizations();
         for (const localization of Object.entries(localizations)) {
             await this.addLocalization(localization);
         }

@@ -1,10 +1,10 @@
-import fs from 'fs';
+import fs from 'fs-extra';
 import path from 'path';
 import git from 'simple-git/promise';
 import { GITHUB_COMMIT_MESSAGE, GITHUB_COMMIT_USER_NAME, GITHUB_COMMIT_USER_EMAIL } from './constants';
 
-function getDirectoryFilesPaths(directory) {
-    const dirents = fs.readdirSync(directory, { withFileTypes: true });
+async function getDirectoryFilesPaths(directory) {
+    const dirents = await fs.readdir(directory, { withFileTypes: true });
     return dirents
         .filter(dirent => !dirent.isDirectory())
         .map(dirent => path.join(directory, dirent.name));
@@ -18,22 +18,22 @@ export default class Repository {
         this.git = git(directoryPath);
     }
 
-    checkForLocaleFolder() {
-        if (!fs.existsSync(this.localeEnPath)) {
+    async checkForLocaleFolder() {
+        if (!await fs.exists(this.localeEnPath)) {
             throw new Error(`no /locale folder found in github repository, ${this.localeEnPath}`);
         }
     }
 
-    getEnglishFiles() {
-        return getDirectoryFilesPaths(this.localeEnPath);
+    async getEnglishFiles() {
+        return await getDirectoryFilesPaths(this.localeEnPath);
     }
 
-    getLocalizations() /* { [language_code]: [absolute_path_to_file, ...] } */ {
+    async getLocalizations() /* { [language_code]: [absolute_path_to_file, ...] } */ {
         const localizations = {};
-        for (const languageCode of fs.readdirSync(this.localesPath)) {
+        for (const languageCode of await fs.readdir(this.localesPath)) {
             if (languageCode !== 'en') {
                 const localePath = path.join(this.localesPath, languageCode);
-                localizations[languageCode] = getDirectoryFilesPaths(localePath);
+                localizations[languageCode] = await getDirectoryFilesPaths(localePath);
             }
         }
         return localizations;
