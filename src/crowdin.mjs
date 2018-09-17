@@ -129,7 +129,7 @@ class CrowdinDirectory {
             await this.axios.post('/add-directory', null, { params });
         } catch (error) {
             if (getCrowdinErrorCode(error) === 50) {
-                throw new Error('[crowdin] directory already exists');
+                throw Error('[crowdin] directory already exists');
                 // todo handle error (merge folders or something else)
             } else {
                 throw error;
@@ -197,7 +197,7 @@ class CrowdinDirectory {
         // check that all files have status 'uploaded'
         for (const [fileName, fileStatus] of Object.entries(response.data.files)) {
             if (fileStatus !== 'uploaded') {
-                throw new Error(`Error during uploading file "${fileName}", status: ${fileStatus}`);
+                throw Error(`Error during uploading file "${fileName}", status: ${fileStatus}`);
             }
         }
     }

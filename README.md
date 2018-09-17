@@ -38,6 +38,7 @@ Then Crowdin translation interface will be opened where you can translate string
 ## Notes
 
 * In order to correctly upload your existing translations to Crowdin, files in any localization folder (such as `/locale/de`) should have same names as files in `/locale/en` folder. Otherwise some translations can be missed.
+* Please ask any questions or report bugs by creating new [issue](https://github.com/dima74/factorio-mods-localization/issues)
 
 ## Detail description of how it works
 0. Mod author has mod repository on GitHub
