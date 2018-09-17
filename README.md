@@ -4,7 +4,7 @@
 [![GitHub license](https://img.shields.io/github/license/dima74/factorio-mods-localization.svg)](https://github.com/dima74/factorio-mods-localization/blob/master/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/dima74/factorio-mods-localization.svg)](https://GitHub.com/dima74/factorio-mods-localization/issues/)
 [![Dependencies](https://david-dm.org/dima74/factorio-mods-localization.png)](https://david-dm.org/dima74/factorio-mods-localization)
-[![Heroku](https://heroku-badge.herokuapp.com/?app=factorio-mods-localization)](https://factorio-mods-localization.herokuapp.com/)
+[![Heroku](https://heroku-badge.herokuapp.com/?app=factorio-mods-localization&svg=1)](https://factorio-mods-localization.herokuapp.com/)
 
 ## Description
 We provide service for simplify [Factorio](https://www.factorio.com/) mods translation. You only need to install [our GitHub app][1]. After this the following actions will be performed automatically:
