@@ -8,6 +8,7 @@ import assert from 'assert';
 import Case from 'case';
 import { ROOT } from './constants';
 import { deleteEmptyIniFiles } from './utility';
+import Raven from 'raven';
 
 export function getCrowdinDirectoryName(fullName) {
     const [owner, repo] = fullName.split('/');
@@ -20,6 +21,10 @@ export function replaceIniToCfg(fileName) {
 
 export function replaceCfgToIni(fileName) {
     return fileName.replace(/.cfg$/, '.ini');
+}
+
+function getCrowdinErrorCode(error) {
+    return error.response && error.response.data && error.response.data.error && error.response.data.error.code;
 }
 
 class CrowdinApi {
@@ -123,7 +128,7 @@ class CrowdinDirectory {
             };
             await this.axios.post('/add-directory', null, { params });
         } catch (error) {
-            if (error.response && error.response.data && error.response.data.error && error.response.data.error.code === 50) {
+            if (getCrowdinErrorCode(error) === 50) {
                 throw new Error('[crowdin] directory already exists');
                 // todo handle error (merge folders or something else)
             } else {
@@ -166,7 +171,7 @@ class CrowdinDirectory {
         const [languageCode, filesPaths] = localization;
         for (const filePath of filesPaths) {
             if (!filePath.endsWith('.cfg') && !filePath.endsWith('.ini')) {
-                console.warn('Locale file with unknown extension:', path.basename(filePath));
+                console.warn(`[${this.repository.fullName}] Locale file with unknown extension: ${path.basename(filePath)}`);
                 continue;
             }
             await this.addTranslatedFile(languageCode, filePath);
@@ -175,7 +180,18 @@ class CrowdinDirectory {
 
     async addTranslatedFile(languageCode, filePath) {
         const params = { language: languageCode, auto_approve_imported: 1 };
-        const response = await this.postLocalizationFile('/upload-translation', filePath, params);
+
+        let response;
+        try {
+            response = await this.postLocalizationFile('/upload-translation', filePath, params);
+        } catch (error) {
+            if (getCrowdinErrorCode(error) === 8) {
+                console.warn(`[${this.repository.fullName}] crowdin/upload-translation: ${languageCode}/${this.getCrowdinFileInfo(filePath)[1]} — correspond english file not found`);
+                Raven.captureException(error);
+            } else {
+                throw error;
+            }
+        }
 
         // check that all files have status 'uploaded'
         for (const [fileName, fileStatus] of Object.entries(response.data.files)) {

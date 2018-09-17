@@ -35,6 +35,10 @@ We have single Crowdin project. It consists of several folders, each folder corr
 
 Then Crowdin translation interface will be opened where you can translate strings.
 
+## Notes
+
+* In order to correctly upload your existing translations to Crowdin, files in any localization folder (such as `/locale/de`) should have same names as files in `/locale/en` folder. Otherwise some translations can be missed.
+
 ## Detail description of how it works
 0. Mod author has mod repository on GitHub
 1. Mod author installs GitHub app (for his mod repository)
