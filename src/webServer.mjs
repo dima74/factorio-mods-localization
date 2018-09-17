@@ -68,7 +68,17 @@ class WebServer {
         //     console.log(event, repo, data);
         // });
 
+        function checkRepositorySelection(data) {
+            assert(data.installation.repository_selection === 'selected', 'repository_selection=all is currently unsupported');
+        }
+
+        webhookHandler.on('installation', (repo, data) => {
+            checkRepositorySelection(data);
+            main.onRepositoriesAddedWebhook(data.installation.id, data.repositories);
+        });
+
         webhookHandler.on('installation_repositories', (repo, data) => {
+            checkRepositorySelection(data);
             main.onRepositoriesAddedWebhook(data.installation.id, data.repositories_added);
         });
 
