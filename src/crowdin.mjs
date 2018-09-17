@@ -124,8 +124,7 @@ class CrowdinDirectory {
             await this.axios.post('/add-directory', null, { params });
         } catch (error) {
             if (error.response && error.response.data && error.response.data.error && error.response.data.error.code === 50) {
-                // todo uncomment
-                // throw new Error('[crowdin] directory already exists');
+                throw new Error('[crowdin] directory already exists');
                 // todo handle error (merge folders or something else)
             } else {
                 throw error;

@@ -6,14 +6,17 @@ import main from './main';
 import database from './database';
 import { IS_DEVELOPMENT } from './constants';
 import crowdinApi, { getCrowdinDirectoryName } from './crowdin';
+import Raven from 'raven';
 
 class WebServer {
     init() {
         const PORT = process.env.PORT || 5000;
         this.app = express();
         this.app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
+        this.app.use(Raven.requestHandler());
         this.initRoutes();
         this.initWebhooks();
+        this.app.use(Raven.errorHandler());
     }
 
     initRoutes() {
@@ -24,6 +27,26 @@ class WebServer {
         this.app.get('/updates', this.getUpdates);
         this.app.get('/triggerUpdate', authMiddleware, this.triggerUpdate);
         this.app.get('/deleteCrowdinExampleDirectory', authMiddleware, this.deleteCrowdinExampleDirectory);
+        this.initExampleRoutes();
+    }
+
+    // for debug only
+    initExampleRoutes() {
+        this.app.get('/error', (req, res) => {
+            console.log('example console log');
+            throw Error('Example error');
+        });
+        this.app.get('/errorAsync', async (req, res, next) => {
+            console.log('before sleep');
+            const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+            await sleep(500);
+            console.log('after sleep');
+            try {
+                throw Error('Example async error');
+            } catch (error) {
+                next(error);
+            }
+        });
     }
 
     authMiddleware(req, res, next) {

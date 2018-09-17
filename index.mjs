@@ -3,6 +3,8 @@ import webServer from './src/webServer';
 import main from './src/main';
 import database from './src/database';
 import './src/base';
+import './src/sentry';
+import Raven from 'raven';
 
 async function init() {
     await github.init();
@@ -15,4 +17,4 @@ async function init() {
     }
 }
 
-init();
+Raven.context(init);
