@@ -9,5 +9,6 @@ const config = {
     captureUnhandledRejections: true,
     sendTimeout: 10,
     autoBreadcrumbs: true,
+    maxBreadcrumbs: 100,
 };
 Raven.config(!IS_DEVELOPMENT && process.env.SENTRY_DSN, config).install();

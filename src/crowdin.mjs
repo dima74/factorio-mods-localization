@@ -144,7 +144,7 @@ class CrowdinDirectory {
         console.log(`[${this.repository.fullName}] crowdin${urlPath}: ${params.language || 'en'}/${crowdinFileName}`);
         form.append(`files[${crowdinFilePath}]`, fs.createReadStream(filePath), crowdinFileName);
         const headers = form.getHeaders();
-        return await this.axios.post(urlPath, form, { headers, params });
+        return await this.axios.post(urlPath, form, { headers, params, debugInfo: { urlPath, filePath } });
     }
 
     async addEnglishFile(filePath) {
