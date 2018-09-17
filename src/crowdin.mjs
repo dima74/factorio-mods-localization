@@ -188,6 +188,7 @@ class CrowdinDirectory {
             if (getCrowdinErrorCode(error) === 8) {
                 console.warn(`[${this.repository.fullName}] crowdin/upload-translation: ${languageCode}/${this.getCrowdinFileInfo(filePath)[1]} — correspond english file not found`);
                 Raven.captureException(error);
+                return;
             } else {
                 throw error;
             }
