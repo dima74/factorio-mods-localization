@@ -1,9 +1,9 @@
 * Add card to heroku to increase free hours to 1000
 * Create another heroku account and configure another dyno, so it will ping main dyno every minute, and vice versa
-* дописать README
 * подумать нужна ли нам отдельная страница для перенаправления после установки приложения
 * Webstorm pullrequest autocomplete for values.map(value => )
 * Custom localized badge (via crowdin api)
+* If in github repository there is language which we don't have yet on crowdin, then we should add this language to crowdin via api
 
 ## Things to consider
 * в идеале сделать для каждого мода отдельный проект на Crowdin

@@ -3,11 +3,19 @@ import path from 'path';
 import git from 'simple-git/promise';
 import { GITHUB_COMMIT_MESSAGE, GITHUB_COMMIT_USER_NAME, GITHUB_COMMIT_USER_EMAIL } from './constants';
 
-async function getDirectoryFilesPaths(directory) {
+async function getDirectoryCfgFilesPaths(directory) {
     const dirents = await fs.readdir(directory, { withFileTypes: true });
     return dirents
         .filter(dirent => !dirent.isDirectory())
+        .filter(dirent => dirent.name.endsWith('.cfg'))
         .map(dirent => path.join(directory, dirent.name));
+}
+
+async function getSubdirectories(directory) {
+    const dirents = await fs.readdir(directory, { withFileTypes: true });
+    return dirents
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name);
 }
 
 export default class Repository {
@@ -25,15 +33,15 @@ export default class Repository {
     }
 
     async getEnglishFiles() {
-        return await getDirectoryFilesPaths(this.localeEnPath);
+        return await getDirectoryCfgFilesPaths(this.localeEnPath);
     }
 
     async getLocalizations() /* { [language_code]: [absolute_path_to_file, ...] } */ {
         const localizations = {};
-        for (const languageCode of await fs.readdir(this.localesPath)) {
+        for (const languageCode of await getSubdirectories(this.localesPath)) {
             if (languageCode !== 'en') {
                 const localePath = path.join(this.localesPath, languageCode);
-                localizations[languageCode] = await getDirectoryFilesPaths(localePath);
+                localizations[languageCode] = await getDirectoryCfgFilesPaths(localePath);
             }
         }
         return localizations;
