@@ -69,7 +69,10 @@ class WebServer {
         // });
 
         function checkRepositorySelection(data) {
-            assert(data.installation.repository_selection === 'selected', 'repository_selection=all is currently unsupported');
+            const repositorySelection = data.installation.repository_selection;
+            if (repositorySelection !== 'selected') {
+                throw Error(`repository_selection=${repositorySelection} is currently unsupported`);
+            }
         }
 
         webhookHandler.on('installation', (repo, data) => {

@@ -13,10 +13,13 @@ TODO
 ## Installation
 1. Go to our [GitHub app page][1]
 2. Click install button
-3. Choose your repositories with factorio mods
+3. Choose repository with your factorio mod
 4. Click install button
 
 You are done! Now share link to [this Crowdin project](https://crowdin.com/project/factorio-mods-localization) with translators
+
+## Usage as translator
+TODO
 
 ## Detail description of how it works
 0. Mod author has mod repository on GitHub
