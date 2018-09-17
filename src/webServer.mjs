@@ -23,7 +23,7 @@ class WebServer {
         assert(process.env.WEBSERVER_SECRET);
         const authMiddleware = this.authMiddleware;
 
-        this.app.get('/', (req, res) => res.send('It works!'));
+        this.app.get('/', this.getMainPage);
         this.app.get('/updates', this.getUpdates);
         this.app.get('/triggerUpdate', authMiddleware, this.triggerUpdate);
         this.app.get('/deleteCrowdinExampleDirectory', authMiddleware, this.deleteCrowdinExampleDirectory);
@@ -91,6 +91,10 @@ class WebServer {
     }
 
     // all next webhooks are for debug
+
+    getMainPage(req, res) {
+        res.send('<p>Factorio mods localization</p><p>See <a href="https://github.com/dima74/factorio-mods-localization">GitHub repository</a> for documentation</p>');
+    }
 
     async getUpdates(req, res, next) {
         res.type('text/plain');
