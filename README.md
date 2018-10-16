@@ -14,7 +14,7 @@ We provide service for simplify [Factorio](https://www.factorio.com/) mods trans
 * Every week our [FactorioBot](https://github.com/factorio-mods-helper) will fetch translations updates from Crowdin and commit them to your repository
 
 ## Motivation
-There are a lot of Factorio mods hosted on GitHub. Most of them are translated using pull requests. I think that it is not very convenient (because it is not clear which strings are untranslated yet and also translator have to know how to use git). So I decide to create helper tool for configuring translation process on Crowdin, powerful localization platform.
+There are a lot of Factorio mods hosted on GitHub. Most of them are translated using pull requests. I think that it is not very convenient (because it is not clear which strings are untranslated yet and also translators have to know how to use git). So I decide to create helper tool for configuring translation process on Crowdin, powerful localization platform.
 
 ## Installation
 1. Go to our [GitHub app page][1]
@@ -30,7 +30,7 @@ We have single Crowdin project. It consists of several folders, each folder corr
 1. Go to [Crowdin project page][2]
 2. Select language
 3. Find folder with your mod
-4. Open menu (click to three points) right of the folder namae
+4. Open menu (click to three points) right of the folder name
 5. Click "Translate"
 
 Then Crowdin translation interface will be opened where you can translate strings.
@@ -40,11 +40,11 @@ Then Crowdin translation interface will be opened where you can translate string
 * In order to correctly upload your existing translations to Crowdin, files in any localization folder (such as `/locale/de`) should have same names as files in `/locale/en` folder. Otherwise some translations can be missed.
 * Please ask any questions or report bugs by creating new [issue](https://github.com/dima74/factorio-mods-localization/issues)
 
-## Detail description of how it works
+## Detailed description of how it works
 0. Mod author has mod repository on GitHub
 1. Mod author installs GitHub app (for his mod repository)
 2. Our service creates subdirectory in our Crowdin project and upload original strings and existing translations into it
-3. Every week our service take strings from Crowdin and make commit to GitHub repository (if there are any changes)
+3. Every week our service takes strings from Crowdin and make commit to GitHub repository (if there are any changes)
 4. Every time original (locale/en) strings are changed, our service changes appropriate strings on Crowdin 
 
 
