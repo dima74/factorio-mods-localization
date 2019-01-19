@@ -170,6 +170,7 @@ class CrowdinDirectory {
     async addLocalization(localization) {
         const [languageCode, filesPaths] = localization;
         for (const filePath of filesPaths) {
+            // todo we can remove this check because we keep only .cfg files repository/getDirectoryCfgFilesPaths
             if (!filePath.endsWith('.cfg') && !filePath.endsWith('.ini')) {
                 console.warn(`[${this.repository.fullName}] Locale file with unknown extension: ${path.basename(filePath)}`);
                 continue;

@@ -44,7 +44,7 @@ class GitHub {
     async getAllRepositories() /* [{installation, fullName}...] */ {
         // todo pagination
         const api = await this.getApi();
-        const installations = (await api.apps.getInstallations({ per_page: 100 })).data;
+        const installations = (await api.apps.listInstallations({ per_page: 100 })).data;
         const installationsRepositoriesPromises = installations.map(installation => this.getInstallationRepositories(installation.id));
         const installationsRepositories = await Promise.all(installationsRepositoriesPromises);
         return [].concat(...installationsRepositories);
@@ -70,7 +70,7 @@ class Installation {
     }
 
     async getRepositories() {
-        const response = await this.api.apps.getInstallationRepositories({ per_page: 100 });
+        const response = await this.api.apps.listRepos({ per_page: 100 });
         const repositories = response.data.repositories;
         return repositories.map(({ full_name }) => ({ installation: this, fullName: full_name }));
     }
