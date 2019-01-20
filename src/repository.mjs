@@ -2,6 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import git from 'simple-git/promise';
 import { GITHUB_COMMIT_MESSAGE, GITHUB_COMMIT_USER_NAME, GITHUB_COMMIT_USER_EMAIL } from './constants';
+import { getSubdirectories } from './utility';
 
 async function getDirectoryCfgFilesPaths(directory) {
     const dirents = await fs.readdir(directory, { withFileTypes: true });
@@ -9,13 +10,6 @@ async function getDirectoryCfgFilesPaths(directory) {
         .filter(dirent => !dirent.isDirectory())
         .filter(dirent => dirent.name.endsWith('.cfg'))
         .map(dirent => path.join(directory, dirent.name));
-}
-
-async function getSubdirectories(directory) {
-    const dirents = await fs.readdir(directory, { withFileTypes: true });
-    return dirents
-        .filter(dirent => dirent.isDirectory())
-        .map(dirent => dirent.name);
 }
 
 export default class Repository {
@@ -36,9 +30,14 @@ export default class Repository {
         return await getDirectoryCfgFilesPaths(this.localeEnPath);
     }
 
+    async getLanguageCodes() {
+        const codes = await getSubdirectories(this.localesPath);
+        return codes.filter(code => code !== 'template');  // https://github.com/Karosieben/boblocale
+    }
+
     async getLocalizations() /* { [language_code]: [absolute_path_to_file, ...] } */ {
         const localizations = {};
-        for (const languageCode of await getSubdirectories(this.localesPath)) {
+        for (const languageCode of await this.getLanguageCodes()) {
             if (languageCode !== 'en') {
                 const localePath = path.join(this.localesPath, languageCode);
                 localizations[languageCode] = await getDirectoryCfgFilesPaths(localePath);

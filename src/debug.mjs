@@ -14,6 +14,7 @@ const repositories = [{
 const fullName = 'dima74/factorio-mod-example';
 
 async function onRepositoriesAddedWebhook() {
+    await crowdinApi.init();
     await crowdinApi.deleteAllDirectories();
     await github.init();
     await main.onRepositoriesAddedWebhook(installationId, repositories);

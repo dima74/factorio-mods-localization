@@ -55,12 +55,23 @@ class CrowdinApi {
         });
     }
 
+    async init() {
+        const response = (await this.axios.get('/supported-languages')).data;
+        this.allLanguageCodes = response.map(language => language.crowdin_code);
+        assert(this.allLanguageCodes.length > 20);
+    }
+
     getCrowdinDirectory(repository) {
         return new CrowdinDirectory(this.axios, repository);
     }
 
     async getProjectInfo() {
         return (await this.axios.post('/info')).data;
+    }
+
+    async getProjectLanguageCodes() {
+        const response = await this.getProjectInfo();
+        return response.languages.map(language => language.code);
     }
 
     async getAllDirectoriesNames() {
@@ -89,6 +100,10 @@ class CrowdinApi {
         return destinationDirectory;
     }
 
+    async editProject(project) {
+        await this.axios.post('/edit-project', null, { params: project });
+    }
+
     // for debug
     async deleteAllDirectories() {
         for (const name of await this.getAllDirectoriesNames()) {
@@ -97,6 +112,7 @@ class CrowdinApi {
     }
 
     async deleteDirectory(name) {
+        assert(name.endsWith('(dima74)') || name.endsWith('(factorio-mods-helper)'));
         const params = { name };
         await this.axios.post('/delete-directory', null, { params });
     }
@@ -110,6 +126,7 @@ class CrowdinDirectory {
     }
 
     async onRepositoryAdded() {
+        await this.checkRepositoryLanguages();
         await this.createRepositoryDirectory();
         await this.addEnglishFiles();
         await this.addAllLocalizations();
@@ -118,6 +135,27 @@ class CrowdinDirectory {
     getCrowdinFileInfo(filePath) {
         const fileName = replaceCfgToIni(path.basename(filePath));
         return [`${this.directoryName}/${fileName}`, fileName];
+    }
+
+    async checkRepositoryLanguages() {
+        // получает список всех подпапок папки /languages
+        // если есть неподдерживаемый язык (https://support.crowdin.com/api/language-codes/), то выбрасывается исключение
+        // если нужно, отправляется запрос на изменение проекта на crowdin (добавление отсутствующих языков)
+
+        const repositoryLanguageCodes = await this.repository.getLanguageCodes();
+        const allLanguageCodes = crowdinApi.allLanguageCodes;
+        const unsupportedLanguageCodes = repositoryLanguageCodes.filter(code => !allLanguageCodes.includes(code));
+        if (unsupportedLanguageCodes.length > 0) {
+            throw Error(`[crowdin] [${this.repository.fullName}] found unsupported languages: ${JSON.stringify(unsupportedLanguageCodes)}`);
+        }
+
+        const projectLanguageCodes = await crowdinApi.getProjectLanguageCodes();
+        const newLanguageCodes = repositoryLanguageCodes.filter(code => !projectLanguageCodes.includes(code) && code !== 'en');
+        if (newLanguageCodes.length > 0) {
+            console.log(`[add-repository] [${this.repository.fullName}] found new languages: ${JSON.stringify(newLanguageCodes)}`);
+            const newProjectLanguageCodes = [...projectLanguageCodes, ...newLanguageCodes];
+            await crowdinApi.editProject({ languages: newProjectLanguageCodes });
+        }
     }
 
     async createRepositoryDirectory() {

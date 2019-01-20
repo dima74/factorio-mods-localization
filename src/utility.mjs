@@ -48,3 +48,10 @@ export function getAllModifiedAndAddedFiles(commits) {
     const commitsFiles = commits.map(commit => [...commit.added, ...commit.modified]);
     return [].concat(...commitsFiles);
 }
+
+export async function getSubdirectories(directory) {
+    const dirents = await fs.readdir(directory, { withFileTypes: true });
+    return dirents
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name);
+}

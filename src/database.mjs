@@ -21,6 +21,7 @@ VALUES (current_timestamp)
 
 class Database {
     async init() {
+        if (IS_DEVELOPMENT) return;
         const config = IS_DEVELOPMENT
             ? { user: 'postgres', database: 'postgres' }
             : { connectionString: process.env.DATABASE_URL, ssl: true };

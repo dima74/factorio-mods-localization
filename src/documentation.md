@@ -6,15 +6,17 @@
 ## Adding github app to repository
 1. Download github repository (just files, without .git folder)
 1. Check for `/locale` and `/locale/en`
-1. Crowdin: 
+1. Crowdin:
+    * add languages to crowdin project if necessary (crowdin-api/edit-project)
     * crowdin-api/add-directory
     * for each file in `/locale/en`: crowdin-api/add-file
     * for each other `/locale` subfolder
         * for each subfolder file: crowdin-api/upload-translation 
 
-## Update github from crowdin (general)
+## Update github from crowdin (general overview)
 1. Get list of all repositories for which github app is installed
 1. Filter list to contain only repositories which also are presented on crowdin
+1. Download all translations from crowdin
 1. Update github from crowdin (for each repository)
 
 ## Update github from crowdin (for each repository) 
@@ -27,8 +29,8 @@
     https://developer.github.com/apps/building-github-apps/authenticating-with-github-apps/#http-based-git-access-by-an-installation
 
 1. For each language:
-    * download tar from crowdin
-    * extract to cloned directory
+    * locate language translations in downloaded files (see general overview for details)
+    * copy them to cloned directory
 1. Make git commit (or break if there are no changes)
 1. Git push
 
@@ -41,7 +43,7 @@
 1. (Note that for now we will not handle file removing) 
 
 ## Notes
-* We need to run some code every week (update github from crowdin). Standard Heroku scheduler mechanism is really very bad (unreliable, costly and difficult to setup). But Heroku forces our app to restart approximately every 24 hours. So we can just run necessary code on app startup. We would store in postgresql (built-in heroku database) updates time, and on startup checks, if last update time is more than week ago (if so, do udpate).
+* We need to run some code every week (update github from crowdin). Standard Heroku scheduler mechanism is really very bad (unreliable, costly and difficult to setup). But Heroku forces our app to restart approximately every 24 hours. So we can just run necessary code on app startup. We would store in postgresql (built-in heroku database) updates time, and on startup checks, if last update time is more than week ago (if so, do update).
 
 * Research: can we make our dyno not sleep if we will every minute send request from our app to itself (via https://factorio-mods-localization.herokuapp.com/)?
 
@@ -49,10 +51,11 @@
 
 * In some mods files names doesn't match across localization folders
 
-    Exampless:
+    Examples:
     
     * `/locale/en/en.cfg` and `/locale/ru/ru.cfg`
     * `/locale/en/Angel.cfg` and `/locale/ru/Angel_ru.cfg`
+    * `/locale/en/bobenemies_0.16.0.cfg` and `/locale/ru/bobenemies.cfg`
 
     We researched >1000 mods and it turns out that only 8% of them has unmatched files names in different languages directories
 
