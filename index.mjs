@@ -5,13 +5,14 @@ import database from './src/database';
 import './src/base';
 import './src/sentry';
 import Raven from 'raven';
+import { IS_DEVELOPMENT } from './src/constants';
 
 async function init() {
     await github.init();
     await webServer.init();
     await database.init();
 
-    if (await database.isLastUpdateLongEnough()) {
+    if (!IS_DEVELOPMENT && await database.isLastUpdateLongEnough()) {
         await main.pushAllCrowdinChangesToGithub();
         await database.commitUpdate();
     }

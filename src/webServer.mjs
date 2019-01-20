@@ -6,13 +6,14 @@ import main from './main';
 import database from './database';
 import { IS_DEVELOPMENT } from './constants';
 import crowdinApi, { getCrowdinDirectoryName } from './crowdin';
+import github from './github';
 import Raven from 'raven';
 
 class WebServer {
     init() {
         const PORT = process.env.PORT || 5000;
         this.app = express();
-        this.app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
+        this.app.listen(PORT, () => console.log(`Listening on ${PORT}`));
         this.app.use(Raven.requestHandler());
         this.initRoutes();
         this.initWebhooks();
@@ -27,6 +28,7 @@ class WebServer {
         this.app.get('/updates', this.getUpdates);
         this.app.get('/triggerUpdate', authMiddleware, this.triggerUpdate);
         this.app.get('/deleteCrowdinExampleDirectory', authMiddleware, this.deleteCrowdinExampleDirectory);
+        this.app.get('/repositories', authMiddleware, this.getRepositories);
         this.initExampleRoutes();
     }
 
@@ -116,6 +118,13 @@ class WebServer {
         } catch (error) {
             next(error);
         }
+    }
+
+    async getRepositories(req, res, next) {
+        const repositories = await github.getAllRepositories();
+        const response = repositories.map(({ installation, fullName }) => ({ installationId: installation.id, fullName }));
+        res.type('text/plain').send(JSON.stringify(response, null, 2));
+        next();
     }
 }
 
