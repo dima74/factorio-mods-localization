@@ -75,7 +75,8 @@ class WebServer {
         function checkRepositorySelection(data) {
             const repositorySelection = data.installation.repository_selection;
             if (repositorySelection !== 'selected') {
-                throw Error(`repository_selection=${repositorySelection} is currently unsupported`);
+                const owner = data.installation.account.login;
+                throw Error(`[owner:${owner}] repository_selection=${repositorySelection} is currently unsupported`);
             }
         }
 

@@ -11,5 +11,6 @@ for (const stream of [process.stdout, process.stderr]) {
 }
 
 export function getRepositoryLogs(fullName) {
-    return logLines.filter(line => line.includes(`[${fullName}]`) || line.includes('[*]'));
+    const [owner, repo] = fullName.split('/');
+    return logLines.filter(line => line.includes(`[${fullName}]`) || line.includes('[*]') || line.includes(`[owner:${owner}]`));
 }
