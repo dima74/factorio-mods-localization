@@ -136,7 +136,7 @@ class WebServer {
             return;
         }
         const logs = getRepositoryLogs(fullName);
-        const response = logs.join('\n') || `There are no logs for "${fullName}" yet.`;
+        const response = logs.join('') || `There are no logs for "${fullName}" yet.`;
         res.type('text/plain').send(response);
     }
 }

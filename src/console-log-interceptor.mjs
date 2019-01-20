@@ -1,14 +1,15 @@
-const logs = [];
+const logLines = [];
 
 for (const stream of [process.stdout, process.stderr]) {
     const write = stream.write;
     stream.write = (...args) => {
         write.call(stream, ...args);
-        const s = args[0];
-        logs.push(s.substr(0, s.length - 1));  // \n
+        const consoleLine = args[0];
+        const logLine = `[${new Date()}] ${consoleLine}`;
+        logLines.push(logLine);
     };
 }
 
 export function getRepositoryLogs(fullName) {
-    return logs.filter(line => line.includes(`[${fullName}]`) || line.includes('[*]'));
+    return logLines.filter(line => line.includes(`[${fullName}]`) || line.includes('[*]'));
 }
