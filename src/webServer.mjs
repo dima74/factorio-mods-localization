@@ -90,6 +90,7 @@ class WebServer {
         const webhookName = ctx.get('X-GitHub-Event');
         switch (webhookName) {
             case 'installation':
+                if (data.action === 'deleted') break;  // TODO what to do when user removes app?
                 checkRepositorySelection(data);
                 main.onRepositoriesAddedWebhook(data.installation.id, data.repositories).catch(handleReject);
                 break;
