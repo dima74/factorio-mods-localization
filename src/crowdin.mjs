@@ -8,7 +8,6 @@ import assert from 'assert';
 import Case from 'case';
 import { ROOT } from './constants';
 import { deleteEmptyIniFiles } from './utility';
-import Raven from 'raven';
 
 export function getCrowdinDirectoryName(fullName) {
     const [owner, repo] = fullName.split('/');
@@ -225,12 +224,10 @@ class CrowdinDirectory {
             response = await this.postLocalizationFile('/upload-translation', filePath, params);
         } catch (error) {
             if (getCrowdinErrorCode(error) === 8) {
-                console.warn(`[${this.repository.fullName}] crowdin/upload-translation: ${languageCode}/${this.getCrowdinFileInfo(filePath)[1]} — correspond english file not found`);
-                Raven.captureException(error);
-                return;
-            } else {
-                throw error;
+                const fileName = this.getCrowdinFileInfo(filePath)[1];
+                console.error(`[${this.repository.fullName}] crowdin/upload-translation: matched english file not found for "${languageCode}/${fileName} "`);
             }
+            throw error;
         }
 
         // check that all files have status 'uploaded'

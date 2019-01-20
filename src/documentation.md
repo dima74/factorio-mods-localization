@@ -7,6 +7,7 @@
 1. Download github repository (just files, without .git folder)
 1. Check for `/locale` and `/locale/en`
 1. Crowdin:
+    * check that for each localization file (that is file in directory like `/locale/ru`) there is corresponding english file (in `/locale/en`)
     * add languages to crowdin project if necessary (crowdin-api/edit-project)
     * crowdin-api/add-directory
     * for each file in `/locale/en`: crowdin-api/add-file

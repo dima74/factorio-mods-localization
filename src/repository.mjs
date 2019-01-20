@@ -26,6 +26,18 @@ export default class Repository {
         }
     }
 
+    async checkTranslationFilesMatchEnglishFiles() {
+        const localizations = await this.getLocalizations();
+        for (const [languageCode, filePaths] of Object.entries(localizations)) {
+            for (const filePath of filePaths) {
+                const fileName = path.basename(filePath);
+                if (!await fs.exists(path.join(this.localeEnPath, fileName))) {
+                    throw Error(`[add-repository] [${this.fullName}] matched english file not found for "${languageCode}/${fileName}"`);
+                }
+            }
+        }
+    }
+
     async getEnglishFiles() {
         return await getDirectoryCfgFilesPaths(this.localeEnPath);
     }
