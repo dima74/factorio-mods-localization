@@ -8,6 +8,7 @@ import { IS_DEVELOPMENT } from './constants';
 import crowdinApi, { getCrowdinDirectoryName } from './crowdin';
 import github from './github';
 import Raven from 'raven';
+import { getRepositoryLogs } from './console-log-interceptor';
 
 class WebServer {
     init() {
@@ -26,6 +27,7 @@ class WebServer {
 
         this.app.get('/', this.getMainPage);
         this.app.get('/updates', this.getUpdates);
+        this.app.get('/logs/\*', this.getRepositoryLogs);
         this.app.get('/triggerUpdate', authMiddleware, this.triggerUpdate);
         this.app.get('/deleteCrowdinExampleDirectory', authMiddleware, this.deleteCrowdinExampleDirectory);
         this.app.get('/repositories', authMiddleware, this.getRepositories);
@@ -125,6 +127,17 @@ class WebServer {
         const response = repositories.map(({ installation, fullName }) => ({ installationId: installation.id, fullName }));
         res.type('text/plain').send(JSON.stringify(response, null, 2));
         next();
+    }
+
+    getRepositoryLogs(req, res) {
+        const fullName = req.params[0];
+        if (fullName.length < 7 || fullName.split('/') !== 2) {
+            res.status(403).send('');
+            return;
+        }
+        const logs = getRepositoryLogs(fullName);
+        const response = logs.join('\n');
+        res.type('text/plain').send(response);
     }
 }
 

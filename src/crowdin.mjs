@@ -87,7 +87,7 @@ class CrowdinApi {
     async exportTranslations() {
         const response = (await this.axios.get('/export')).data;
         if (!response.success || response.success.status !== 'built') {
-            console.warn('[crowdin] export translations has no effect (no changes since last export)');
+            console.warn('[crowdin] [*] export translations has no effect (no changes since last export)');
         }
     }
 

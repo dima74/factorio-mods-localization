@@ -21,14 +21,14 @@ class Main {
     }
 
     async pushAllCrowdinChangesToGithub() {
-        console.log('\n[update-github-from-crowdin] starting...');
+        console.log('\n[update-github-from-crowdin] [*] starting...');
         const repositories = await github.getAllRepositories();
         const repositoriesFiltered = await crowdinApi.filterRepositories(repositories);
         const translationsDirectory = await crowdinApi.downloadAllTranlations();
         for (const repository of repositoriesFiltered) {
             await this.pushRepositoryCrowdinChangesToGithub(translationsDirectory, repository);
         }
-        console.log('[update-github-from-crowdin] success');
+        console.log('[update-github-from-crowdin] [*] success');
     }
 
     async pushRepositoryCrowdinChangesToGithub(translationsDirectory, { installation, fullName }) {
