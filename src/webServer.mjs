@@ -131,12 +131,12 @@ class WebServer {
 
     getRepositoryLogs(req, res) {
         const fullName = req.params[0];
-        if (fullName.length < 7 || fullName.split('/') !== 2) {
+        if (fullName.length < 7 || fullName.split('/').length !== 2) {
             res.status(403).send('');
             return;
         }
         const logs = getRepositoryLogs(fullName);
-        const response = logs.join('\n');
+        const response = logs.join('\n') || `There are no logs for "${fullName}" yet.`;
         res.type('text/plain').send(response);
     }
 }
