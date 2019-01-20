@@ -22,7 +22,7 @@ class WebServer {
         app
             .use(this.router.routes())
             .use(this.router.allowedMethods());
-        app.on('error', err => { debugger; Sentry.captureException(err);});
+        app.on('error', err => Sentry.captureException(err));
         const PORT = process.env.PORT || 5000;
         app.listen(PORT, () => console.log(`Listening on ${PORT}`));
     }
