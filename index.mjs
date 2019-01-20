@@ -1,3 +1,4 @@
+import './src/console-log-interceptor';
 import github from './src/github';
 import webServer from './src/webServer';
 import main from './src/main';
