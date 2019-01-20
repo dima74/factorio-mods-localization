@@ -8,7 +8,9 @@ Sentry.init({
     integrations: [new Sentry.Integrations.Transaction()],
     // https://github.com/getsentry/sentry-javascript/issues/1600#issuecomment-426010114
     beforeSend: (event, hint) => {
-        console.error(hint.originalException || hint.syntheticException);
+        const exception = hint.originalException || hint.syntheticException;
+        delete exception.status;
+        console.error(exception);
         // returning null drops the event, so nothing will be send to sentry in development
         return IS_DEVELOPMENT ? null : event;
     },

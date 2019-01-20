@@ -10,7 +10,6 @@ for (const stream of [process.stdout, process.stderr]) {
     stream.write = (...args) => {
         write.call(stream, ...args);
         const consoleLine = args[0]
-            .replace('{ Error:', 'Error:')
             .replace(/    at .*\n/g, '');  // hack to remove stack traces
         const logLine = `[${getDate()}] ${consoleLine}`;
         logLines.push(logLine);
