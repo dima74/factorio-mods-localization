@@ -100,6 +100,7 @@ class WebServer {
             case 'push':
                 main.onPushWebhook(data).catch(handleReject);
         }
+        ctx.status = 204;
     }
 
     // all next webhooks are for debug
