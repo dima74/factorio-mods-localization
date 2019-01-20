@@ -1,14 +1,17 @@
 import assert from 'assert';
-import Raven from 'raven';
+import Sentry from '@sentry/node';
 import { IS_DEVELOPMENT } from './constants';
 
-if (!IS_DEVELOPMENT) {
-    assert(process.env.SENTRY_DSN);
-}
-const config = {
-    captureUnhandledRejections: true,
-    sendTimeout: 10,
-    autoBreadcrumbs: true,
-    maxBreadcrumbs: 100,
-};
-Raven.config(!IS_DEVELOPMENT && process.env.SENTRY_DSN, config).install();
+assert(process.env.SENTRY_DSN);
+Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    integrations: [new Sentry.Integrations.Transaction()],
+    // https://github.com/getsentry/sentry-javascript/issues/1600#issuecomment-426010114
+    beforeSend: (event, hint) => {
+        if (IS_DEVELOPMENT) {
+            console.error(hint.originalException || hint.syntheticException);
+            return null; // this drops the event and nothing will be send to sentry
+        }
+        return event;
+    },
+});

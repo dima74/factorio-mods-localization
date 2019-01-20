@@ -5,20 +5,8 @@
 //  unhandledRejection event is deprecated
 //  (so we must always handle any possible rejection)
 
-// proper logging on error (why node doesn't have it by default???)
-// process
-//     .on('unhandledRejection', (reason, p) => {
-//         console.log('unhandledRejection');
-//         console.error('Unhandled Rejection at Promise');
-//         if (reason.host) {
-//             console.error(reason.host + reason.path);
-//         }
-//         console.error(reason);
-//     })
-//     .on('uncaughtException', err => {
-//         console.error(err, 'Uncaught Exception thrown');
-//     });
+import Sentry from '@sentry/node';
 
-export function handleReject(reason) {
-    console.error(reason);
+export function handleReject(e) {
+    Sentry.captureException(e);
 }

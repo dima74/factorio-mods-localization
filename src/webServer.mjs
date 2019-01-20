@@ -1,28 +1,30 @@
 import assert from 'assert';
-import express from 'express';
-import router from 'express-promise-router';
-import bodyParser from 'body-parser';
-import GithubWebHook from 'express-github-webhook';
+import Koa from 'koa';
+import Router from 'koa-router';
+import bodyParser from 'koa-bodyparser';
 import main from './main';
 import database from './database';
 import { IS_DEVELOPMENT } from './constants';
 import crowdinApi, { getCrowdinDirectoryName } from './crowdin';
 import github from './github';
-import Raven from 'raven';
+import Sentry from '@sentry/node';
+import crypto from 'crypto';
 import { getRepositoryLogs } from './console-log-interceptor';
 import { handleReject } from './base';
 
 class WebServer {
     init() {
-        const PORT = process.env.PORT || 5000;
-        const app = express();
-        app.listen(PORT, () => console.log(`Listening on ${PORT}`));
-        this.router = router();
-        this.router.use(Raven.requestHandler());
+        this.router = new Router();
         this.initRoutes();
-        this.router.use(Raven.errorHandler());
-        app.use('/webhook', this.getWebhookRouter());
-        app.use('/', this.router);
+        this.initWebhooks();
+
+        const app = new Koa();
+        app
+            .use(this.router.routes())
+            .use(this.router.allowedMethods());
+        app.on('error', err => { debugger; Sentry.captureException(err);});
+        const PORT = process.env.PORT || 5000;
+        app.listen(PORT, () => console.log(`Listening on ${PORT}`));
     }
 
     initRoutes() {
@@ -31,7 +33,7 @@ class WebServer {
 
         this.router.get('/', this.getMainPage);
         this.router.get('/updates', this.getUpdates);
-        this.router.get('/logs/\*', this.getRepositoryLogs);
+        this.router.get('/logs/:fullName*', this.getRepositoryLogs);
         this.router.get('/triggerUpdate', authMiddleware, this.triggerUpdate);
         this.router.get('/deleteCrowdinExampleDirectory', authMiddleware, this.deleteCrowdinExampleDirectory);
         this.router.get('/repositories', authMiddleware, this.getRepositories);
@@ -40,42 +42,42 @@ class WebServer {
 
     // for debug only
     initExampleRoutes() {
-        this.router.get('/error', (req, res) => {
-            console.log('example console log');
-            throw Error('Example error');
+        this.router.get('/error1', async (ctx) => {
+            console.log('/error1');
+            throw Error('Example error 1');
         });
-        this.router.get('/errorAsync', async (req, res) => {
+        this.router.get('/error2', async (ctx) => {
             console.log('before sleep');
             const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
             await sleep(500);
             console.log('after sleep');
-            throw Error('Example async error');
+            throw Error('Example error 2');
         });
-        this.router.get('/errorAsync2', (req, res) => {
-            Promise.reject(Error('Example async2 error')).catch(handleReject);
-            res.send();
+        this.router.get('/error3', async (ctx) => {
+            Promise.reject(Error('Example error 3')).catch(handleReject);
         });
     }
 
-    authMiddleware(req, res, next) {
-        if (req.query.secret === process.env.WEBSERVER_SECRET || IS_DEVELOPMENT) {
-            next();
+    async authMiddleware(ctx, next) {
+        if (ctx.query.secret === process.env.WEBSERVER_SECRET || IS_DEVELOPMENT) {
+            await next();
         } else {
-            res.status(403);
-            res.send('Error: missed or incorrect secret');
+            ctx.throw(403, 'Error: missed or incorrect secret');
         }
     }
 
-    getWebhookRouter() {
+    initWebhooks() {
         assert(process.env.WEBHOOKS_SECRET);
-        const router = express.Router();
-        const webhookHandler = GithubWebHook({ path: '/', secret: process.env.WEBHOOKS_SECRET });
-        router.use(bodyParser.json());
-        router.use(webhookHandler);
+        this.router.post('/webhook', bodyParser(), this.onWebhook);
+    }
 
-        // webhookHandler.on('*', function (event, repo, data) {
-        //     console.log(event, repo, data);
-        // });
+    async onWebhook(ctx) {
+        const data = ctx.request.body;
+        const secret = process.env.WEBHOOKS_SECRET;
+        const signatureExpected = 'sha1=' + crypto.createHmac('sha1', secret).update(data).digest('hex');
+        const signatureReceived = ctx.get('X-Hub-Signature');
+        const isSignatureValid = crypto.timingSafeEqual(new Buffer(signatureReceived), new Buffer(signatureExpected));
+        if (!isSignatureValid) ctx.throw(403, '[github-webhook] Failed to verify signature');
 
         function checkRepositorySelection(data) {
             const repositorySelection = data.installation.repository_selection;
@@ -85,60 +87,55 @@ class WebServer {
             }
         }
 
-        webhookHandler.on('installation', (repo, data) => {
-            checkRepositorySelection(data);
-            main.onRepositoriesAddedWebhook(data.installation.id, data.repositories).catch(handleReject);
-        });
-
-        webhookHandler.on('installation_repositories', (repo, data) => {
-            checkRepositorySelection(data);
-            main.onRepositoriesAddedWebhook(data.installation.id, data.repositories_added).catch(handleReject);
-        });
-
-        webhookHandler.on('push', (repo, data) => {
-            main.onPushWebhook(data).catch(handleReject);
-        });
-
-        return router;
+        const webhookName = ctx.get('X-GitHub-Event');
+        switch (webhookName) {
+            case 'installation':
+                checkRepositorySelection(data);
+                main.onRepositoriesAddedWebhook(data.installation.id, data.repositories).catch(handleReject);
+                break;
+            case 'installation_repositories':
+                checkRepositorySelection(data);
+                main.onRepositoriesAddedWebhook(data.installation.id, data.repositories_added).catch(handleReject);
+                break;
+            case 'push':
+                main.onPushWebhook(data).catch(handleReject);
+        }
     }
 
     // all next webhooks are for debug
 
-    getMainPage(req, res) {
-        res.send('<p>Factorio mods localization</p><p>See <a href="https://github.com/dima74/factorio-mods-localization">GitHub repository</a> for documentation</p>');
+    async getMainPage(ctx) {
+        ctx.body = '<p>Factorio mods localization</p><p>See <a href="https://github.com/dima74/factorio-mods-localization">GitHub repository</a> for documentation</p>';
     }
 
-    async getUpdates(req, res) {
-        res.type('text/plain');
-        res.send(await database.getUpdatesInfo());
+    async getUpdates(ctx) {
+        ctx.body = await database.getUpdatesInfo();
     }
 
-    triggerUpdate(req, res) {
-        res.type('text/plain').send('Triggered. See logs for details.');
+    async triggerUpdate(ctx) {
+        ctx.body = 'Triggered. See logs for details.';
         main.pushAllCrowdinChangesToGithub().catch(handleReject);
     }
 
-    async deleteCrowdinExampleDirectory(req, res) {
+    async deleteCrowdinExampleDirectory(ctx) {
         const crowdinName = getCrowdinDirectoryName('dima74/factorio-mod-example');
         await crowdinApi.deleteDirectory(crowdinName);
-        res.type('text/plain').send('OK');
+        ctx.body = 'OK';
     }
 
-    async getRepositories(req, res) {
+    async getRepositories(ctx) {
         const repositories = await github.getAllRepositories();
         const response = repositories.map(({ installation, fullName }) => ({ installationId: installation.id, fullName }));
-        res.type('text/plain').send(JSON.stringify(response, null, 2));
+        ctx.body = JSON.stringify(response, null, 2);
     }
 
-    getRepositoryLogs(req, res) {
-        const fullName = req.params[0];
+    async getRepositoryLogs(ctx) {
+        const fullName = ctx.params.fullName;
         if (fullName.length < 7 || fullName.split('/').length !== 2) {
-            res.status(403).send('');
-            return;
+            ctx.throw(403);
         }
         const logs = getRepositoryLogs(fullName);
-        const response = logs.join('') || `There are no logs for "${fullName}" yet.`;
-        res.type('text/plain').send(response);
+        ctx.body = logs.join('') || `There are no logs for "${fullName}" yet.`;
     }
 }
 

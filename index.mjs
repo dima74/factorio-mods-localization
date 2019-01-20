@@ -6,8 +6,8 @@ import database from './src/database';
 import crowdinApi from './src/crowdin';
 import './src/base';
 import './src/sentry';
-import Raven from 'raven';
 import { IS_DEVELOPMENT } from './src/constants';
+import { handleReject } from './src/base';
 
 async function init() {
     await crowdinApi.init();
@@ -21,4 +21,4 @@ async function init() {
     }
 }
 
-Raven.context(init);
+init().catch(handleReject);
