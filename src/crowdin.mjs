@@ -145,7 +145,7 @@ class CrowdinDirectory {
         const allLanguageCodes = crowdinApi.allLanguageCodes;
         const unsupportedLanguageCodes = repositoryLanguageCodes.filter(code => !allLanguageCodes.includes(code));
         if (unsupportedLanguageCodes.length > 0) {
-            throw Error(`[crowdin] [${this.repository.fullName}] found unsupported languages: ${JSON.stringify(unsupportedLanguageCodes)}`);
+            throw Error(`[add-repository] [${this.repository.fullName}] some languages found in repository are not unsupported by crowdin: ${JSON.stringify(unsupportedLanguageCodes)}`);
         }
 
         const projectLanguageCodes = await crowdinApi.getProjectLanguageCodes();
@@ -166,7 +166,7 @@ class CrowdinDirectory {
             await this.axios.post('/add-directory', null, { params });
         } catch (error) {
             if (getCrowdinErrorCode(error) === 50) {
-                throw Error('[crowdin] directory already exists');
+                throw Error(`[add-repository] [${this.repository.fullName}] crowdin/add-directory: directory "${this.directoryName}" already exists`);
                 // todo handle error (merge folders or something else)
             } else {
                 throw error;
@@ -233,7 +233,7 @@ class CrowdinDirectory {
         // check that all files have status 'uploaded'
         for (const [fileName, fileStatus] of Object.entries(response.data.files)) {
             if (fileStatus !== 'uploaded') {
-                throw Error(`Error during uploading file "${fileName}", status: ${fileStatus}`);
+                throw Error(`[add-repository] [${this.repository.fullName}] Error during uploading file "${fileName}", status: ${fileStatus}`);
             }
         }
     }

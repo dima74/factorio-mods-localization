@@ -22,7 +22,7 @@ export default class Repository {
 
     async checkForLocaleFolder() {
         if (!await fs.exists(this.localeEnPath)) {
-            throw Error(`no /locale folder found in github repository, ${this.localeEnPath}`);
+            throw Error(`[add-repository] [${this.fullName}] "/locale/en" subdirectory not found in github repository`);
         }
     }
 
