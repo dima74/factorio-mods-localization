@@ -74,7 +74,7 @@ class WebServer {
     async onWebhook(ctx) {
         const data = ctx.request.body;
         const secret = process.env.WEBHOOKS_SECRET;
-        const signatureExpected = 'sha1=' + crypto.createHmac('sha1', secret).update(data).digest('hex');
+        const signatureExpected = 'sha1=' + crypto.createHmac('sha1', secret).update(JSON.stringify(data)).digest('hex');
         const signatureReceived = ctx.get('X-Hub-Signature');
         const isSignatureValid = crypto.timingSafeEqual(new Buffer(signatureReceived), new Buffer(signatureExpected));
         if (!isSignatureValid) ctx.throw(403, '[github-webhook] Failed to verify signature');
