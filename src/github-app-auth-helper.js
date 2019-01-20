@@ -15,7 +15,7 @@ module.exports = function ({id, cert, debug = false}) {
     function asInstallation (installationId) {
         return createToken(installationId).then(res => {
             const github = new GitHubApi({debug})
-            github.authenticate({type: 'token', token: res.data.token})
+            github.authenticate({type: 'app', token: res.data.token})
             return github
         })
     }
