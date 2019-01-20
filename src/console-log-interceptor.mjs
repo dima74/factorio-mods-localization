@@ -9,9 +9,10 @@ for (const stream of [process.stdout, process.stderr]) {
     const write = stream.write;
     stream.write = (...args) => {
         write.call(stream, ...args);
-        const consoleLine = args[0]
-            .replace(/    at .*\n/g, '');  // hack to remove stack traces
-        const logLine = `[${getDate()}] ${consoleLine}`;
+        let consoleLine = args[0];
+        if (consoleLine.startsWith('\n')) logLines.push('\n');
+        consoleLine = consoleLine.replace(/    at .*\n/g, '');  // hack to remove stack traces
+        const logLine = (consoleLine.startsWith('\n') ? '\n' : '') + `[${getDate()}] ${consoleLine.trimLeft()}`;
         logLines.push(logLine);
     };
 }
