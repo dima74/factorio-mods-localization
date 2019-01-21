@@ -47,14 +47,15 @@ class WebServer {
             throw Error('Example error 1');
         });
         this.router.get('/error2', async (ctx) => {
-            console.log('before sleep');
+            console.log('/error2: before sleep');
             const sleep = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
             await sleep(500);
-            console.log('after sleep');
+            console.log('/error2: after sleep');
             throw Error('Example error 2');
         });
         this.router.get('/error3', async (ctx) => {
-            Promise.reject(Error('Example error 3')).catch(handleReject);
+            // should not log anything and not send error to sentry
+            ctx.throw(403, '/error3');
         });
     }
 
@@ -68,7 +69,7 @@ class WebServer {
 
     initWebhooks() {
         assert(process.env.WEBHOOKS_SECRET);
-        this.router.post('/webhook', bodyParser(), this.onWebhook);
+        this.router.post('/webhook', bodyParser(), this.onWebhook.bind(this));
     }
 
     async onWebhook(ctx) {
@@ -79,6 +80,12 @@ class WebServer {
         const isSignatureValid = crypto.timingSafeEqual(new Buffer(signatureReceived), new Buffer(signatureExpected));
         if (!isSignatureValid) ctx.throw(403, '[github-webhook] Failed to verify signature');
 
+        const webhookName = ctx.get('X-GitHub-Event');
+        this.handleWebhook(webhookName, data).catch(handleReject);
+        ctx.status = 204;
+    }
+
+    async handleWebhook(name, data) {
         function checkRepositorySelection(data) {
             const repositorySelection = data.installation.repository_selection;
             if (repositorySelection !== 'selected') {
@@ -87,21 +94,19 @@ class WebServer {
             }
         }
 
-        const webhookName = ctx.get('X-GitHub-Event');
-        switch (webhookName) {
+        switch (name) {
             case 'installation':
                 if (data.action === 'deleted') break;  // TODO what to do when user removes app?
                 checkRepositorySelection(data);
-                main.onRepositoriesAddedWebhook(data.installation.id, data.repositories).catch(handleReject);
+                await main.onRepositoriesAddedWebhook(data.installation.id, data.repositories);
                 break;
             case 'installation_repositories':
                 checkRepositorySelection(data);
-                main.onRepositoriesAddedWebhook(data.installation.id, data.repositories_added).catch(handleReject);
+                await main.onRepositoriesAddedWebhook(data.installation.id, data.repositories_added);
                 break;
             case 'push':
-                main.onPushWebhook(data).catch(handleReject);
+                await main.onPushWebhook(data);
         }
-        ctx.status = 204;
     }
 
     // all next webhooks are for debug

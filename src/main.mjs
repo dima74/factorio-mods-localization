@@ -1,12 +1,13 @@
 import github from './github';
 import crowdinApi from './crowdin';
 import { getAllModifiedAndAddedFiles, moveTranslatedFilesToRepository } from './utility';
+import { handleReject } from './base';
 
 class Main {
     async onRepositoriesAddedWebhook(installationId, repositories) {
         const installation = await github.getInstallation(installationId);
         for (const repository of repositories) {
-            await this.onRepositoryAdded(installation, repository);
+            await this.onRepositoryAdded(installation, repository).catch(handleReject);
         }
     }
 
@@ -27,7 +28,7 @@ class Main {
         const repositoriesFiltered = await crowdinApi.filterRepositories(repositories);
         const translationsDirectory = await crowdinApi.downloadAllTranlations();
         for (const repository of repositoriesFiltered) {
-            await this.pushRepositoryCrowdinChangesToGithub(translationsDirectory, repository);
+            await this.pushRepositoryCrowdinChangesToGithub(translationsDirectory, repository).catch(handleReject);
         }
         console.log('[update-github-from-crowdin] [*] success');
     }
