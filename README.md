@@ -25,7 +25,7 @@ There are a lot of Factorio mods hosted on GitHub. Most of them are translated u
 You are done! Now share link to [this Crowdin project][2] with translators
 
 ## How to translate using Crowdin
-We have single Crowdin project. It consists of several folders, each folder corresponds to one mod. So, here is instruction how to translate specific mod:
+We have single Crowdin project. It consists of several folders, each folder corresponds to one mod. So, here are instructions how to translate specific mod:
 
 1. Go to [Crowdin project page][2]
 2. Select language
@@ -42,9 +42,9 @@ Then Crowdin translation interface will be opened where you can translate string
 
 ## Detailed description of how it works
 0. Mod author has mod repository on GitHub
-1. Mod author installs GitHub app (for his mod repository)
-2. Our service creates subdirectory in our Crowdin project and upload original strings and existing translations into it
-3. Every week our service takes strings from Crowdin and make commit to GitHub repository (if there are any changes)
+1. Mod author installs GitHub app (for mod repository)
+2. Our service creates subdirectory in our Crowdin project and upload original english strings and existing translations into it
+3. Every week our service takes translated strings from Crowdin and make commit to GitHub repository (if there are any changes)
 4. Every time original (locale/en) strings are changed, our service changes appropriate strings on Crowdin 
 
 
