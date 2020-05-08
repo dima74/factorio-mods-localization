@@ -241,7 +241,7 @@ class CrowdinDirectory {
     async updateFilesOnCrowdin(filesNames) {
         const info = await crowdinApi.getProjectInfo();
         const crowdinDirectory = info.files.find(file => file.name === this.directoryName);
-        assert(crowdinDirectory);
+        assert(crowdinDirectory, `Can't find directory on crowdin for ${this.repository.fullName}. Maybe it was not imported correctly?`);
         const crowdinFiles = crowdinDirectory.files.map(file => file.name);
 
         // todo Promise.all

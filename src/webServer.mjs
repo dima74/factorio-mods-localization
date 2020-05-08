@@ -34,7 +34,7 @@ class WebServer {
         this.router.get('/', this.getMainPage);
         this.router.get('/updates', this.getUpdates);
         this.router.get('/logs/:fullName*', this.getRepositoryLogs);
-        this.router.get('/triggerUpdate', authMiddleware, this.triggerUpdate);
+        this.router.get('/triggerUpdate', this.triggerUpdate);
         this.router.get('/deleteCrowdinExampleDirectory', authMiddleware, this.deleteCrowdinExampleDirectory);
         this.router.get('/repositories', authMiddleware, this.getRepositories);
         this.initExampleRoutes();
@@ -138,7 +138,7 @@ class WebServer {
 
     async getRepositoryLogs(ctx) {
         const fullName = ctx.params.fullName;
-        if (fullName.length < 7 || fullName.split('/').length !== 2) {
+        if (fullName === undefined || fullName.length < 7 || fullName.split('/').length !== 2) {
             ctx.throw(403);
         }
         const logs = getRepositoryLogs(fullName);
