@@ -11,6 +11,7 @@ import Sentry from '@sentry/node';
 import crypto from 'crypto';
 import { getRepositoryLogs } from './console-log-interceptor.js';
 import { handleReject } from './base.js';
+import { getLogsAll } from './console-log-interceptor.js';
 
 class WebServer {
     init() {
@@ -34,6 +35,7 @@ class WebServer {
         this.router.get('/', this.getMainPage);
         this.router.get('/updates', this.getUpdates);
         this.router.get('/logs/:fullName*', this.getRepositoryLogs);
+        this.router.get('/logsAll', authMiddleware, this.getLogsAll);
         this.router.get('/triggerUpdate', this.triggerUpdate);
         this.router.get('/deleteCrowdinExampleDirectory', authMiddleware, this.deleteCrowdinExampleDirectory);
         this.router.get('/repositories', authMiddleware, this.getRepositories);
@@ -134,6 +136,11 @@ class WebServer {
         const repositories = await github.getAllRepositories();
         const response = repositories.map(({ installation, fullName }) => ({ installationId: installation.id, fullName }));
         ctx.body = JSON.stringify(response, null, 2);
+    }
+
+    async getLogsAll(ctx) {
+        const logs = getLogsAll();
+        ctx.body = logs.join('') || `There are no logs yet.`;
     }
 
     async getRepositoryLogs(ctx) {

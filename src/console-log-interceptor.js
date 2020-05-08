@@ -21,3 +21,7 @@ export function getRepositoryLogs(fullName) {
     const [owner, repo] = fullName.split('/');
     return logLines.filter(line => line.includes(`[${fullName}]`) || line.includes('[*]') || line.includes(`[owner:${owner}]`));
 }
+
+export function getLogsAll() {
+    return logLines;
+}
