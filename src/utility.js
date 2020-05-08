@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import assert from 'assert';
 import recursiveReaddir from 'recursive-readdir';
-import { getCrowdinDirectoryName, replaceCfgToIni, replaceIniToCfg } from './crowdin';
+import { getCrowdinDirectoryName, replaceCfgToIni, replaceIniToCfg } from './crowdin.js';
 
 export async function deleteEmptyIniFiles(directory) {
     const files = await recursiveReaddir(directory);

@@ -6,8 +6,8 @@ import uuid from 'uuid';
 import download from 'download';
 import assert from 'assert';
 import Case from 'case';
-import { ROOT } from './constants';
-import { deleteEmptyIniFiles } from './utility';
+import { ROOT } from './constants.js';
+import { deleteEmptyIniFiles } from './utility.js';
 
 export function getCrowdinDirectoryName(fullName) {
     const [owner, repo] = fullName.split('/');

@@ -1,8 +1,8 @@
 import fs from 'fs-extra';
 import path from 'path';
-import git from 'simple-git/promise';
-import { GITHUB_COMMIT_MESSAGE, GITHUB_COMMIT_USER_NAME, GITHUB_COMMIT_USER_EMAIL } from './constants';
-import { getSubdirectories } from './utility';
+import git from 'simple-git/promise.js';
+import { GITHUB_COMMIT_MESSAGE, GITHUB_COMMIT_USER_NAME, GITHUB_COMMIT_USER_EMAIL } from './constants.js';
+import { getSubdirectories } from './utility.js';
 
 async function getDirectoryCfgFilesPaths(directory) {
     const dirents = await fs.readdir(directory, { withFileTypes: true });

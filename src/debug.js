@@ -1,8 +1,8 @@
-import './base';
-import main from './main';
-import github from './github';
-import crowdinApi from './crowdin';
-import pushPayload from './temp/pushPayload';
+import './base.js';
+import main from './main.js';
+import github from './github.js';
+import crowdinApi from './crowdin.js';
+// import pushPayload from './temp/pushPayload.js';
 
 const installationId = 207362;
 const repositories = [{

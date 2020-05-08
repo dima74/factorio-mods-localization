@@ -6,8 +6,9 @@
   "repository": "https://github.com/dima74/factorio-mods-localization-helper",
   "author": "Dmitry Murzin <murzin.da@phystech.edu>",
   "engines": {
-    "node": ">=10"
+    "node": ">=14"
   },
+  "type": "module",
   "dependencies": {
     "@octokit/rest": "^16.10.0",
     "@sentry/node": "^4.5.2",

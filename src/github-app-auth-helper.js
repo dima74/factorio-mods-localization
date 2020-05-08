@@ -1,9 +1,9 @@
 // TODO delete this file if my pull request will be merged https://github.com/probot/github-app/pull/16
 
-const jwt = require('jsonwebtoken')
-const GitHubApi = require('@octokit/rest')
+import jwt from 'jsonwebtoken';
+import GitHubApi from "@octokit/rest";
 
-module.exports = function ({id, cert, debug = false}) {
+export default function ({id, cert, debug = false}) {
     function asApp (jwtExpirationPeriodInSeconds = 60) {
         const github = new GitHubApi({debug})
         github.authenticate({type: 'app', token: generateJwt(id, cert, jwtExpirationPeriodInSeconds)})

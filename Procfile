@@ -1,1 +1,1 @@
-web: node --stack_trace_limit=1000 --experimental-modules index.mjs
+web: node --stack_trace_limit=1000 index.js

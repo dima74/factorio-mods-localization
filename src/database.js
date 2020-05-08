@@ -1,5 +1,5 @@
 import pg from 'pg';
-import { CROWDIN_TO_GITHUB_UPDATE_PERIOD_MILLISECONDS, IS_DEVELOPMENT } from './constants';
+import { CROWDIN_TO_GITHUB_UPDATE_PERIOD_MILLISECONDS, IS_DEVELOPMENT } from './constants.js';
 import moment from 'moment';
 
 const QUERY_CREATE_TABLE_IF_NOT_EXISTS = `

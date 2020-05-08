@@ -1,6 +1,6 @@
 import assert from 'assert';
 import Sentry from '@sentry/node';
-import { IS_DEVELOPMENT } from './constants';
+import { IS_DEVELOPMENT } from './constants.js';
 
 assert(process.env.SENTRY_DSN);
 Sentry.init({

@@ -1,10 +1,10 @@
-import createApp from './github-app-auth-helper';
+import createApp from './github-app-auth-helper.js';
 import process from 'process';
 import path from 'path';
-import { IS_DEVELOPMENT, ROOT } from './constants';
+import { IS_DEVELOPMENT, ROOT } from './constants.js';
 import uuid from 'uuid';
-import Repository from './repository';
-import git from 'simple-git/promise';
+import Repository from './repository.js';
+import git from 'simple-git/promise.js';
 
 class GitHub {
     async init() {

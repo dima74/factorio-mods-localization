@@ -2,15 +2,15 @@ import assert from 'assert';
 import Koa from 'koa';
 import Router from 'koa-router';
 import bodyParser from 'koa-bodyparser';
-import main from './main';
-import database from './database';
-import { IS_DEVELOPMENT } from './constants';
-import crowdinApi, { getCrowdinDirectoryName } from './crowdin';
-import github from './github';
+import main from './main.js';
+import database from './database.js';
+import { IS_DEVELOPMENT } from './constants.js';
+import crowdinApi, { getCrowdinDirectoryName } from './crowdin.js';
+import github from './github.js';
 import Sentry from '@sentry/node';
 import crypto from 'crypto';
-import { getRepositoryLogs } from './console-log-interceptor';
-import { handleReject } from './base';
+import { getRepositoryLogs } from './console-log-interceptor.js';
+import { handleReject } from './base.js';
 
 class WebServer {
     init() {

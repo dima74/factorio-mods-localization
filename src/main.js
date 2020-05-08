@@ -1,7 +1,7 @@
-import github from './github';
-import crowdinApi from './crowdin';
-import { getAllModifiedAndAddedFiles, moveTranslatedFilesToRepository } from './utility';
-import { handleReject } from './base';
+import github from './github.js';
+import crowdinApi from './crowdin.js';
+import { getAllModifiedAndAddedFiles, moveTranslatedFilesToRepository } from './utility.js';
+import { handleReject } from './base.js';
 
 class Main {
     async onRepositoriesAddedWebhook(installationId, repositories) {
