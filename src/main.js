@@ -28,12 +28,26 @@ class Main {
         const repositoriesFiltered = await crowdinApi.filterRepositories(repositories);
         const translationsDirectory = await crowdinApi.downloadAllTranlations();
         for (const repository of repositoriesFiltered) {
-            await this.pushRepositoryCrowdinChangesToGithub(translationsDirectory, repository).catch(handleReject);
+            await this._pushRepositoryCrowdinChangesToGithub(translationsDirectory, repository).catch(handleReject);
         }
         console.log('[update-github-from-crowdin] [*] success');
     }
 
-    async pushRepositoryCrowdinChangesToGithub(translationsDirectory, { installation, fullName }) {
+    async pushRepositoryCrowdinChangesToGithub(fullName) {
+        console.log(`\n[update-github-from-crowdin] [${fullName}] starting...`);
+        const repositories = await github.getAllRepositories();
+        const repositoriesFiltered = await crowdinApi.filterRepositories(repositories);
+        const translationsDirectory = await crowdinApi.downloadAllTranlations();
+
+        const repository = repositoriesFiltered.filter(repository => repository.fullName === fullName)[0];
+        if (!repository) return `Repository ${fullName} not found`;
+
+        await this._pushRepositoryCrowdinChangesToGithub(translationsDirectory, repository);
+        console.log(`[update-github-from-crowdin] [${fullName}] success`);
+        return 'Ok';
+    }
+
+    async _pushRepositoryCrowdinChangesToGithub(translationsDirectory, { installation, fullName }) {
         const repository = await installation.cloneRepository(fullName);
         await moveTranslatedFilesToRepository(translationsDirectory, repository);
         const areChangesExists = await repository.pushAllChanges();

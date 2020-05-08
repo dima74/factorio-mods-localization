@@ -32,13 +32,13 @@ class WebServer {
         assert(process.env.WEBSERVER_SECRET);
         const authMiddleware = this.authMiddleware;
 
-        this.router.get('/', this.getMainPage);
-        this.router.get('/updates', this.getUpdates);
-        this.router.get('/logs/:fullName*', this.getRepositoryLogs);
-        this.router.get('/logsAll', authMiddleware, this.getLogsAll);
-        this.router.get('/triggerUpdate', this.triggerUpdate);
-        this.router.get('/deleteCrowdinExampleDirectory', authMiddleware, this.deleteCrowdinExampleDirectory);
-        this.router.get('/repositories', authMiddleware, this.getRepositories);
+        this.router.get('/', this.getMainPage.bind(this));
+        this.router.get('/updates', this.getUpdates.bind(this));
+        this.router.get('/logs/:fullName*', this.getRepositoryLogs.bind(this));
+        this.router.get('/logsAll', authMiddleware, this.getLogsAll.bind(this));
+        this.router.get('/triggerUpdate', this.triggerUpdate.bind(this));
+        this.router.get('/deleteCrowdinExampleDirectory', authMiddleware, this.deleteCrowdinExampleDirectory.bind(this));
+        this.router.get('/repositories', authMiddleware, this.getRepositories.bind(this));
         this.initExampleRoutes();
     }
 
@@ -122,6 +122,24 @@ class WebServer {
     }
 
     async triggerUpdate(ctx) {
+        const repo = ctx.query.repo;
+        if (repo) {
+            await this.triggerUpdateSingle(ctx, repo);
+        } else {
+            await this.triggerUpdateAll(ctx);
+        }
+    }
+
+    async triggerUpdateSingle(ctx, repo) {
+        try {
+            ctx.body = await main.pushRepositoryCrowdinChangesToGithub(repo);
+        } catch (e) {
+            handleReject(e);
+            ctx.body = 'Error during update, see logs for details';
+        }
+    }
+
+    async triggerUpdateAll(ctx) {
         ctx.body = 'Triggered. See logs for details.';
         main.pushAllCrowdinChangesToGithub().catch(handleReject);
     }
