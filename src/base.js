@@ -6,6 +6,12 @@
 //  (so we must always handle any possible rejection)
 
 import Sentry from '@sentry/node';
+import dotenv from 'dotenv';
+import { IS_DEVELOPMENT } from "./constants.js";
+
+if (IS_DEVELOPMENT) {
+    dotenv.config({ path: '../.env' });
+}
 
 export function handleReject(e) {
     Sentry.captureException(e);

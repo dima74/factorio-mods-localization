@@ -1,45 +1,30 @@
-// TODO delete this file if my pull request will be merged https://github.com/probot/github-app/pull/16
+// some useful information in my pull request: https://github.com/probot/github-app/pull/16
 
-import jwt from 'jsonwebtoken';
-import GitHubApi from "@octokit/rest";
+import GitHubApi from '@octokit/rest';
+import authApp from '@octokit/auth-app';
 
-export default function ({id, cert, debug = false}) {
-    function asApp (jwtExpirationPeriodInSeconds = 60) {
-        const github = new GitHubApi({debug})
-        github.authenticate({type: 'app', token: generateJwt(id, cert, jwtExpirationPeriodInSeconds)})
-        // Return a promise to keep API consistent
-        return Promise.resolve(github)
+// fucking @octokit/auth-app
+const { createAppAuth } = authApp;
+
+export default function ({ id, privateKey, debug = false }) {
+    const auth = createAppAuth({ id, privateKey });
+
+    async function asApp() {
+        const { token } = await auth({ type: 'app' });
+
+        const github = new GitHubApi({ debug });
+        github.authenticate({ type: 'app', token });
+        return github;
     }
 
     // Authenticate as the given installation
-    function asInstallation (installationId) {
-        return createToken(installationId).then(res => {
-            const github = new GitHubApi({debug})
-            github.authenticate({type: 'app', token: res.data.token})
-            return github
-        })
+    async function asInstallation(installationId) {
+        const { token } = await auth({ type: 'installation', installationId });
+
+        const github = new GitHubApi({ debug });
+        github.authenticate({ type: 'app', token });
+        return github;
     }
 
-    // https://developer.github.com/early-access/integrations/authentication/#as-an-installation
-    function createToken (installationId) {
-        return asApp().then(github => {
-            return github.apps.createInstallationToken({
-                installation_id: installationId
-            })
-        })
-    }
-
-    // Internal - no need to expose this right now
-    function generateJwt (id, cert, expirationPeriodInSeconds) {
-        const payload = {
-            iat: Math.floor(new Date() / 1000), // Issued at time
-            exp: Math.floor(new Date() / 1000) + expirationPeriodInSeconds, // JWT expiration time
-            iss: id // Integration's GitHub id
-        }
-
-        // Sign with RSA SHA256
-        return jwt.sign(payload, cert, {algorithm: 'RS256'})
-    }
-
-    return {asApp, asInstallation, createToken}
+    return { asApp, asInstallation };
 }

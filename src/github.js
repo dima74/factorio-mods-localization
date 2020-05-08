@@ -9,20 +9,18 @@ import git from 'simple-git/promise.js';
 class GitHub {
     async init() {
         const id = process.env.GITHUB_APP_ID;
-        const cert = process.env.GITHUB_APP_PRIVATE_KEY.replace(/\\n/g, '\n');
+        const privateKey = process.env.GITHUB_APP_PRIVATE_KEY.replace(/\\n/g, '\n');
 
-        if (!id || !cert) {
+        if (!id || !privateKey) {
             console.error('Environment variables GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY must be set');
             process.exit(1);
         }
 
-        this.apiHelper = createApp({ id, cert });
+        this.apiHelper = createApp({ id, privateKey });
     }
 
     async getApi() {
-        // max jwtTokenLifetime for github is 10 minutes (so we can't generate token once at app startup)
-        const jwtTokenLifetime = 10 * 60;
-        return await this.apiHelper.asApp(jwtTokenLifetime);
+        return await this.apiHelper.asApp();
     }
 
     async getInstallation(id) {
