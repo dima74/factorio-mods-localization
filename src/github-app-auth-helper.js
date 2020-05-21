@@ -3,7 +3,6 @@
 import GitHubApi from '@octokit/rest';
 import authApp from '@octokit/auth-app';
 
-// fucking @octokit/auth-app
 const { createAppAuth } = authApp;
 
 export default function ({ id, privateKey, debug = false }) {
@@ -11,19 +10,13 @@ export default function ({ id, privateKey, debug = false }) {
 
     async function asApp() {
         const { token } = await auth({ type: 'app' });
-
-        const github = new GitHubApi({ debug });
-        github.authenticate({ type: 'app', token });
-        return github;
+        return new GitHubApi.Octokit({ auth: token, debug });
     }
 
     // Authenticate as the given installation
     async function asInstallation(installationId) {
         const { token } = await auth({ type: 'installation', installationId });
-
-        const github = new GitHubApi({ debug });
-        github.authenticate({ type: 'app', token });
-        return github;
+        return new GitHubApi.Octokit({ auth: token, debug });
     }
 
     return { asApp, asInstallation };

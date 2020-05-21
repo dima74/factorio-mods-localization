@@ -26,7 +26,7 @@ class Main {
         console.log('\n[update-github-from-crowdin] [*] starting...');
         const repositories = await github.getAllRepositories();
         const repositoriesFiltered = await crowdinApi.filterRepositories(repositories);
-        const translationsDirectory = await crowdinApi.downloadAllTranlations();
+        const translationsDirectory = await crowdinApi.downloadAllTranslations();
         for (const repository of repositoriesFiltered) {
             await this._pushRepositoryCrowdinChangesToGithub(translationsDirectory, repository).catch(handleReject);
         }
@@ -37,7 +37,7 @@ class Main {
         console.log(`\n[update-github-from-crowdin] [${fullName}] starting...`);
         const repositories = await github.getAllRepositories();
         const repositoriesFiltered = await crowdinApi.filterRepositories(repositories);
-        const translationsDirectory = await crowdinApi.downloadAllTranlations();
+        const translationsDirectory = await crowdinApi.downloadAllTranslations();
 
         const repository = repositoriesFiltered.filter(repository => repository.fullName === fullName)[0];
         if (!repository) return `Repository ${fullName} not found`;

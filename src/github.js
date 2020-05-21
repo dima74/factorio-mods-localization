@@ -2,7 +2,7 @@ import createApp from './github-app-auth-helper.js';
 import process from 'process';
 import path from 'path';
 import { IS_DEVELOPMENT, ROOT } from './constants.js';
-import uuid from 'uuid';
+import * as uuid from 'uuid';
 import Repository from './repository.js';
 import git from 'simple-git/promise.js';
 

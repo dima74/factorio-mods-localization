@@ -1,11 +1,12 @@
 import assert from 'assert';
 import Sentry from '@sentry/node';
+import Integrations from '@sentry/integrations';
 import { IS_DEVELOPMENT } from './constants.js';
 
 assert(process.env.SENTRY_DSN);
 Sentry.init({
     dsn: process.env.SENTRY_DSN,
-    integrations: [new Sentry.Integrations.Transaction()],
+    integrations: [new Integrations.Transaction(), new Integrations.ExtraErrorData()],
     // https://github.com/getsentry/sentry-javascript/issues/1600#issuecomment-426010114
     beforeSend: (event, hint) => {
         const exception = hint.originalException || hint.syntheticException;

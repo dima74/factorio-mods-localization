@@ -2,7 +2,7 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import FormData from 'form-data';
-import uuid from 'uuid';
+import * as uuid from 'uuid';
 import download from 'download';
 import assert from 'assert';
 import Case from 'case';
@@ -90,7 +90,7 @@ class CrowdinApi {
         }
     }
 
-    async downloadAllTranlations() {
+    async downloadAllTranslations() {
         await this.exportTranslations();
         const url = `https://api.crowdin.com/api/project/${this.projectId}/download/all.zip?key=${this.apiKey}`;
         const destinationDirectory = path.join(ROOT, uuid.v4());
@@ -145,7 +145,7 @@ class CrowdinDirectory {
         const allLanguageCodes = crowdinApi.allLanguageCodes;
         const unsupportedLanguageCodes = repositoryLanguageCodes.filter(code => !allLanguageCodes.includes(code));
         if (unsupportedLanguageCodes.length > 0) {
-            throw Error(`[add-repository] [${this.repository.fullName}] some languages found in repository are not unsupported by crowdin: ${JSON.stringify(unsupportedLanguageCodes)}`);
+            throw Error(`[add-repository] [${this.repository.fullName}] some languages found in repository are not supported by crowdin: ${JSON.stringify(unsupportedLanguageCodes)}`);
         }
 
         const projectLanguageCodes = await crowdinApi.getProjectLanguageCodes();
