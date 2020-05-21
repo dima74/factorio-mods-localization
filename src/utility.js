@@ -2,7 +2,8 @@ import fs from 'fs-extra';
 import path from 'path';
 import assert from 'assert';
 import recursiveReaddir from 'recursive-readdir';
-import { getCrowdinDirectoryName, replaceCfgToIni, replaceIniToCfg } from './crowdin.js';
+import { getCrowdinDirectoryName, replaceIniToCfg } from './crowdin.js';
+import { normalizeLanguageCode } from './crowdin.js';
 
 export async function deleteEmptyIniFiles(directory) {
     const files = await recursiveReaddir(directory);
@@ -30,7 +31,10 @@ export async function moveTranslatedFilesToRepository(translationsDirectory, rep
             continue;
         }
 
-        const languagePathRepository = path.join(repository.localesPath, language);
+        const languageOriginal = (await fs.readdir(repository.localesPath))
+            .find(code => normalizeLanguageCode(code) === language);
+        assert(languageOriginal !== undefined);
+        const languagePathRepository = path.join(repository.localesPath, languageOriginal);
         if (!(await fs.exists(languagePathRepository))) {
             await fs.mkdir(languagePathRepository);
         }

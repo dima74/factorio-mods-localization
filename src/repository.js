@@ -3,6 +3,7 @@ import path from 'path';
 import git from 'simple-git/promise.js';
 import { GITHUB_COMMIT_MESSAGE, GITHUB_COMMIT_USER_NAME, GITHUB_COMMIT_USER_EMAIL } from './constants.js';
 import { getSubdirectories } from './utility.js';
+import { normalizeLanguageCode } from './crowdin.js';
 
 async function getDirectoryCfgFilesPaths(directory) {
     const dirents = await fs.readdir(directory, { withFileTypes: true });
@@ -52,7 +53,7 @@ export default class Repository {
         for (const languageCode of await this.getLanguageCodes()) {
             if (languageCode !== 'en') {
                 const localePath = path.join(this.localesPath, languageCode);
-                localizations[languageCode] = await getDirectoryCfgFilesPaths(localePath);
+                localizations[normalizeLanguageCode(languageCode)] = await getDirectoryCfgFilesPaths(localePath);
             }
         }
         return localizations;

@@ -141,7 +141,7 @@ class CrowdinDirectory {
         // если есть неподдерживаемый язык (https://support.crowdin.com/api/language-codes/), то выбрасывается исключение
         // если нужно, отправляется запрос на изменение проекта на crowdin (добавление отсутствующих языков)
 
-        const repositoryLanguageCodes = await this.repository.getLanguageCodes();
+        const repositoryLanguageCodes = (await this.repository.getLanguageCodes()).map(normalizeLanguageCode);
         const allLanguageCodes = crowdinApi.allLanguageCodes;
         const unsupportedLanguageCodes = repositoryLanguageCodes.filter(code => !allLanguageCodes.includes(code));
         if (unsupportedLanguageCodes.length > 0) {
@@ -254,6 +254,17 @@ class CrowdinDirectory {
             }
         }
     }
+}
+
+// crowdin expects codes in format 'pt-BR'
+// however some mods use 'pt-br' as language code
+// (e.g. https://github.com/JonasJurczok/factorio-todo-list/tree/master/locale/pt-br)
+// this function converts 'pt-br' to 'pt-BR'
+export function normalizeLanguageCode(code) {
+    if (!code.includes('-')) return code;
+    const parts = code.split('-');
+    if (parts.length !== 2) return code;
+    return `${parts[0]}-${parts[1].toUpperCase()}`;
 }
 
 const crowdinApi = new CrowdinApi();
