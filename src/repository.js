@@ -8,7 +8,7 @@ import { normalizeLanguageCode } from './crowdin.js';
 async function getDirectoryCfgFilesPaths(directory) {
     const dirents = await fs.readdir(directory, { withFileTypes: true });
     return dirents
-        .filter(dirent => !dirent.isDirectory())
+        .filter(dirent => dirent.isFile())
         .filter(dirent => dirent.name.endsWith('.cfg'))
         .map(dirent => path.join(directory, dirent.name));
 }

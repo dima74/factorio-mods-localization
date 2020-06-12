@@ -48,13 +48,18 @@ class Main {
     }
 
     async _pushRepositoryCrowdinChangesToGithub(translationsDirectory, { installation, fullName }) {
-        const repository = await installation.cloneRepository(fullName);
-        await moveTranslatedFilesToRepository(translationsDirectory, repository);
-        const areChangesExists = await repository.pushAllChanges();
-        if (areChangesExists) {
-            console.log(`[update-github-from-crowdin] [${fullName}] pushed`);
-        } else {
-            console.log(`[update-github-from-crowdin] [${fullName}] no changes found`);
+        try {
+            const repository = await installation.cloneRepository(fullName);
+            await moveTranslatedFilesToRepository(translationsDirectory, repository);
+            const areChangesExists = await repository.pushAllChanges();
+            if (areChangesExists) {
+                console.log(`[update-github-from-crowdin] [${fullName}] pushed`);
+            } else {
+                console.log(`[update-github-from-crowdin] [${fullName}] no changes found`);
+            }
+        } catch (e) {
+            console.log(`[update-github-from-crowdin] [${fullName}] error`);
+            throw e;
         }
     }
 
@@ -62,8 +67,9 @@ class Main {
         console.log(`\n[push-webhook] [${data.repository.full_name}] starting...`);
         const modifiedFiles = getAllModifiedAndAddedFiles(data.commits);
         const modifiedLocaleEnFiles = modifiedFiles
-            .filter(file => file.startsWith('locale/en'))
-            .map(file => file.substring('locale/en/'.length));
+            .filter(file => file.startsWith('locale/en') && file.endsWith('.cfg'))
+            .map(file => file.substring('locale/en/'.length))
+            .filter(file => !file.includes('/'));
         if (modifiedLocaleEnFiles.length === 0) {
             console.log(`[push-webhook] [${data.repository.full_name}] no modified/added english files found`);
             return;

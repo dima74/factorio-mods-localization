@@ -39,7 +39,7 @@ export async function moveTranslatedFilesToRepository(translationsDirectory, rep
             await fs.mkdir(languagePathRepository);
         }
         await Promise.all(files.map(file => {
-            assert(file.endsWith('.ini'));
+            assert(file.endsWith('.ini'), `file ${file} must ends with .ini`);
             const fileRenamed = replaceIniToCfg(file);
             const oldPath = path.join(languagePathCrowdin, file);
             const newPath = path.join(languagePathRepository, fileRenamed);
