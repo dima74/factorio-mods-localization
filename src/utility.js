@@ -31,9 +31,9 @@ export async function moveTranslatedFilesToRepository(translationsDirectory, rep
             continue;
         }
 
-        const languageOriginal = (await fs.readdir(repository.localesPath))
+        let languageOriginal = (await fs.readdir(repository.localesPath))
             .find(code => normalizeLanguageCode(code) === language);
-        assert(languageOriginal !== undefined);
+        if (languageOriginal === undefined) languageOriginal = language;
         const languagePathRepository = path.join(repository.localesPath, languageOriginal);
         if (!(await fs.exists(languagePathRepository))) {
             await fs.mkdir(languagePathRepository);
