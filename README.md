@@ -31,7 +31,7 @@ We have single Crowdin project. It consists of several folders, each folder corr
 2. Select language
 3. Find folder with your mod
 4. Open menu (click to three points) right of the folder name
-5. Click "Translate"
+5. Click "Open in Editor": ![menu](https://user-images.githubusercontent.com/6505554/85887708-bdfa5880-b801-11ea-99c1-766ad92ae4af.png)
 
 Then Crowdin translation interface will be opened where you can translate strings.
 
