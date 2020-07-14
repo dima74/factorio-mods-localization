@@ -217,7 +217,7 @@ class CrowdinDirectory {
     }
 
     async addTranslatedFile(languageCode, filePath) {
-        const params = { language: languageCode, auto_approve_imported: 1 };
+        const params = { language: languageCode };
 
         let response;
         try {
