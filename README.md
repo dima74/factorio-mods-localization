@@ -14,7 +14,7 @@ We provide service for simplify [Factorio](https://www.factorio.com/) mods trans
 * Every week our [FactorioBot](https://github.com/factorio-mods-helper) will fetch translations updates from Crowdin and commit them to your repository
 
 ## Motivation
-There are a lot of Factorio mods hosted on GitHub. Most of them are translated using pull requests. I think that it is not very convenient (because it is not clear which strings are untranslated yet and also translators have to know how to use git). So I decide to create helper tool for configuring translation process on Crowdin, powerful localization platform.
+There are a lot of Factorio mods hosted on GitHub. Most of them are translated using pull requests. I think that it is not very convenient (because it is not clear which strings are untranslated yet and translators have to know how to use git). So I decided to create helper tool for configuring translation process on Crowdin, powerful localization platform.
 
 ## Installation
 1. Go to our [GitHub app page][1]
@@ -22,7 +22,9 @@ There are a lot of Factorio mods hosted on GitHub. Most of them are translated u
 3. Choose repository with your Factorio mod
 4. Click install button
 
-You are done! Now share link to [this Crowdin project][2] with translators
+You are done! Now share link to [this Crowdin project][2] with translators.
+
+Please note that **only Crowdin should be used for translation**.  GitHub pull requests must not be used for translation, otherwise translations will be lost after next synchronization from Crowdin! Consider adding link to [Crowdin][2] to your repository Readme ([example](https://github.com/softmix/AutoDeconstruct/pull/6/files)).
 
 ## How to translate using Crowdin
 We have single Crowdin project. It consists of several folders, each folder corresponds to one mod. So, here are instructions how to translate specific mod:
