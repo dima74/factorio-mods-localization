@@ -8,6 +8,7 @@ import assert from 'assert';
 import Case from 'case';
 import { ROOT } from './constants.js';
 import { deleteEmptyIniFiles } from './utility.js';
+import { escapeStringsIfNeeded } from './cfg-parser.js';
 
 export function getCrowdinDirectoryName(fullName) {
     const [owner, repo] = fullName.split('/');
@@ -184,6 +185,7 @@ class CrowdinDirectory {
         const form = new FormData();
         const [crowdinFilePath, crowdinFileName] = this.getCrowdinFileInfo(filePath);
         console.log(`[${this.repository.fullName}] crowdin${urlPath}: ${params.language || 'en'}/${crowdinFileName}`);
+        escapeStringsIfNeeded(filePath);
         form.append(`files[${crowdinFilePath}]`, fs.createReadStream(filePath), crowdinFileName);
         const headers = form.getHeaders();
         return await this.axios.post(urlPath, form, { headers, params, debugInfo: { urlPath, crowdinFilePath } });
