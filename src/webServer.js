@@ -9,9 +9,8 @@ import crowdinApi, { getCrowdinDirectoryName } from './crowdin.js';
 import github from './github.js';
 import Sentry from '@sentry/node';
 import crypto from 'crypto';
-import { getRepositoryLogs } from './console-log-interceptor.js';
+import { getLogsAll, getRepositoryLogs } from './console-log-interceptor.js';
 import { handleReject } from './base.js';
-import { getLogsAll } from './console-log-interceptor.js';
 
 class WebServer {
     init() {

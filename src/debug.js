@@ -27,7 +27,7 @@ async function pushAllCrowdinChangesToGithub() {
 
 async function pushRepositoryCrowdinChangesToGithub() {
     await github.init();
-    await main.pushRepositoryCrowdinChangesToGithub({ installationId, fullName });
+    await main._pushRepositoryCrowdinChangesToGithub({ installationId, fullName });
 }
 
 async function onPushWebhook() {
@@ -38,5 +38,15 @@ async function onPushWebhook() {
 // onRepositoriesAddedWebhook();
 // pushAllCrowdinChangesToGithub();
 // pushRepositoryCrowdinChangesToGithub();
-// crowdinApi.downloadAllTranlations();
+// crowdinApi.downloadAllTranslations();
 // onPushWebhook();
+
+(async function () {
+    // await github.init();
+    // const repos = await github.getAllRepositories();
+    // console.log(repos);
+
+    await crowdinApi.init();
+    await crowdinApi.downloadAllTranslations();
+    // console.log(...crowdinApi.allLanguageCodes);
+})();

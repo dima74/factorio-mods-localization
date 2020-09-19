@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import git from 'simple-git/promise.js';
-import { GITHUB_COMMIT_MESSAGE, GITHUB_COMMIT_USER_NAME, GITHUB_COMMIT_USER_EMAIL } from './constants.js';
+import { GITHUB_COMMIT_MESSAGE, GITHUB_COMMIT_USER_EMAIL, GITHUB_COMMIT_USER_NAME } from './constants.js';
 import { getSubdirectories } from './utility.js';
 import { normalizeLanguageCode } from './crowdin.js';
 
@@ -21,8 +21,8 @@ export default class Repository {
         this.git = git(directoryPath);
     }
 
-    async checkForLocaleFolder() {
-        if (!await fs.exists(this.localeEnPath)) {
+    checkForLocaleFolder() {
+        if (!fs.existsSync(this.localeEnPath)) {
             throw Error(`[add-repository] [${this.fullName}] "/locale/en" subdirectory not found in github repository`);
         }
     }
@@ -32,7 +32,7 @@ export default class Repository {
         for (const [languageCode, filePaths] of Object.entries(localizations)) {
             for (const filePath of filePaths) {
                 const fileName = path.basename(filePath);
-                if (!await fs.exists(path.join(this.localeEnPath, fileName))) {
+                if (!fs.existsSync(path.join(this.localeEnPath, fileName))) {
                     throw Error(`[add-repository] [${this.fullName}] matched english file not found for "${languageCode}/${fileName}"`);
                 }
             }

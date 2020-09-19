@@ -2,8 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import assert from 'assert';
 import recursiveReaddir from 'recursive-readdir';
-import { getCrowdinDirectoryName, replaceIniToCfg } from './crowdin.js';
-import { normalizeLanguageCode } from './crowdin.js';
+import { getCrowdinDirectoryName, normalizeLanguageCode, replaceIniToCfg } from './crowdin.js';
 
 export async function deleteEmptyIniFiles(directory) {
     const files = await recursiveReaddir(directory);
@@ -25,7 +24,7 @@ export async function moveTranslatedFilesToRepository(translationsDirectory, rep
     const languages = await fs.readdir(translationsDirectory);
     for (const language of languages) {
         const languagePathCrowdin = path.join(translationsDirectory, language, getCrowdinDirectoryName(repository.fullName));
-        assert(await fs.exists(languagePathCrowdin));
+        assert(fs.existsSync(languagePathCrowdin));
         const files = await fs.readdir(languagePathCrowdin);
         if (files.length === 0) {
             continue;
@@ -35,7 +34,7 @@ export async function moveTranslatedFilesToRepository(translationsDirectory, rep
             .find(code => normalizeLanguageCode(code) === language);
         if (languageOriginal === undefined) languageOriginal = language;
         const languagePathRepository = path.join(repository.localesPath, languageOriginal);
-        if (!(await fs.exists(languagePathRepository))) {
+        if (!(fs.existsSync(languagePathRepository))) {
             await fs.mkdir(languagePathRepository);
         }
         await Promise.all(files.map(file => {

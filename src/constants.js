@@ -1,7 +1,7 @@
 export const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
 
 export const ROOT = IS_DEVELOPMENT
-    ? '/home/dima/IdeaProjects/factorio/factorio-mods-localization/temp'
+    ? '/home/dima/IdeaProjects/factorio-mods-localization/temp'
     : '/tmp';
 // export const ROOT = '/tmp';
 

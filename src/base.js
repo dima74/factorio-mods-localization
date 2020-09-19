@@ -7,10 +7,12 @@
 
 import Sentry from '@sentry/node';
 import dotenv from 'dotenv';
-import { IS_DEVELOPMENT } from "./constants.js";
+import { IS_DEVELOPMENT } from './constants.js';
+import path from 'path';
 
 if (IS_DEVELOPMENT) {
-    dotenv.config({ path: '../.env' });
+    const dotenvPath = path.join(import.meta.url, '../../.env').replace(/^file:/, '');
+    dotenv.config({ path: dotenvPath });
 }
 
 export function handleReject(e) {
