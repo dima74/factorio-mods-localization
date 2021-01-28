@@ -12,7 +12,8 @@ import { escapeStringsIfNeeded } from './cfg-parser.js';
 
 export function getCrowdinDirectoryName(fullName) {
     const [owner, repo] = fullName.split('/');
-    return `${Case.capital(repo)} (${owner})`;
+    const repoTitleCase = Case.capital(repo).replaceAll(/([a-z])([A-Z])/g, (_, c1, c2) => c1 + ' ' + c2);
+    return `${repoTitleCase} (${owner})`;
 }
 
 export function replaceIniToCfg(fileName) {
