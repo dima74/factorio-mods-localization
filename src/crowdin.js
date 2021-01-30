@@ -197,7 +197,7 @@ class CrowdinDirectory {
     }
 
     async updateEnglishFile(filePath) {
-        await this.postLocalizationFile('/update-file', filePath, { update_option: 'update_as_unapproved' });
+        await this.postLocalizationFile('/update-file', filePath);
     }
 
     async addAllLocalizations() {
