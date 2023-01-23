@@ -26,7 +26,6 @@
     "koa-router": "^8.0.8",
     "lodash.isequal": "^4.5.0",
     "moment": "^2.25.3",
-    "pg": "^7.8.0",
     "recursive-readdir": "^2.2.2",
     "simple-git": "^2.4.0",
     "uuid": "^8.0.0"

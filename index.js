@@ -13,11 +13,9 @@ async function init() {
     await crowdinApi.init();
     await github.init();
     await webServer.init();
-    await database.init();
 
     if (!IS_DEVELOPMENT && await database.isLastUpdateLongEnough()) {
-        await main.pushAllCrowdinChangesToGithub();
-        await database.commitUpdate();
+        // await main.pushAllCrowdinChangesToGithub();
     }
 }
 
