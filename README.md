@@ -3,7 +3,6 @@
 [![Website factorio-mods-localization.herokuapp.com](https://img.shields.io/website-up-down-green-red/https/factorio-mods-localization.herokuapp.com.svg)](https://factorio-mods-localization.herokuapp.com/)
 [![GitHub license](https://img.shields.io/github/license/dima74/factorio-mods-localization.svg)](https://github.com/dima74/factorio-mods-localization/blob/master/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/dima74/factorio-mods-localization.svg)](https://GitHub.com/dima74/factorio-mods-localization/issues/)
-[![Heroku](https://heroku-badge.herokuapp.com/?app=factorio-mods-localization&svg=1)](https://factorio-mods-localization.herokuapp.com/)
 [![Crowdin](https://badges.crowdin.net/factorio-mods-localization/localized.svg)](https://crowdin.com/project/factorio-mods-localization)
 
 ## Description
