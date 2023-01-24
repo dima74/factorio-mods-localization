@@ -22,6 +22,15 @@ class Main {
         console.log(`[add-repository] [${fullName}] success`);
     }
 
+    async updateCrowdinEnglishFiles(installation, fullName) {
+        console.log(`\n[update-crowdin-from-github] [${fullName}] starting...`);
+        const repository = await installation.cloneRepository(fullName);
+        repository.checkForLocaleFolder();
+        const crowdin = crowdinApi.getCrowdinDirectory(repository);
+        await crowdin.updateEnglishFiles();
+        console.log(`[update-crowdin-from-github] [${fullName}] success`);
+    }
+
     async pushAllCrowdinChangesToGithub() {
         console.log('\n[update-github-from-crowdin] [*] starting...');
         const repositories = await github.getAllRepositories();

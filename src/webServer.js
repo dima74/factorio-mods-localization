@@ -36,6 +36,7 @@ class WebServer {
         this.router.get('/logs/:fullName*', this.getRepositoryLogs.bind(this));
         this.router.get('/logsAll', authMiddleware, this.getLogsAll.bind(this));
         this.router.get('/triggerUpdate', this.triggerUpdate.bind(this));
+        this.router.get('/updateCrowdinEnglishFiles', authMiddleware, this.updateCrowdinEnglishFiles.bind(this));
         this.router.get('/deleteCrowdinExampleDirectory', authMiddleware, this.deleteCrowdinExampleDirectory.bind(this));
         this.router.get('/repositories', authMiddleware, this.getRepositories.bind(this));
         this.initExampleRoutes();
@@ -141,6 +142,24 @@ class WebServer {
     async triggerUpdateAll(ctx) {
         ctx.body = 'Triggered. See logs for details.';
         main.pushAllCrowdinChangesToGithub().catch(handleReject);
+    }
+
+    /**
+     * Emulates reinstalling of GitHub app for all repositories.
+     * This updates Crowdin based on GitHub english files.
+     * Needed when the app was offline long time, so we miss commits webhooks.
+     */
+    async updateCrowdinEnglishFiles(ctx) {
+        const repositories = await github.getAllRepositories();
+        ctx.body = 'Triggered. See logs for details.';
+        // no await since it can be longer then 30 seconds request timeout
+        this.updateCrowdinEnglishFilesImpl(repositories).catch(handleReject)
+    }
+
+    async updateCrowdinEnglishFilesImpl(repositories) {
+        for (const { fullName, installation } of repositories) {
+            await main.updateCrowdinEnglishFiles(installation, fullName).catch(handleReject);
+        }
     }
 
     async deleteCrowdinExampleDirectory(ctx) {

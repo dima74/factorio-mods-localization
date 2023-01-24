@@ -182,6 +182,17 @@ class CrowdinDirectory {
         }
     }
 
+    async updateEnglishFiles() {
+        for (const filePath of await this.repository.getEnglishFiles()) {
+            // todo either add or update based on existence of the file
+            try {
+                await this.updateEnglishFile(filePath);
+            } catch (error) {
+                await this.addEnglishFile(filePath);
+            }
+        }
+    }
+
     async postLocalizationFile(urlPath, filePath, params = {}) {
         const form = new FormData();
         const [crowdinFilePath, crowdinFileName] = this.getCrowdinFileInfo(filePath);
