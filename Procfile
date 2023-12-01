@@ -1,1 +1,1 @@
-web: node --stack_trace_limit=1000 index.js
+web: RUST_BACKTRACE=1 ROCKET_PORT=$PORT ./target/release/fml

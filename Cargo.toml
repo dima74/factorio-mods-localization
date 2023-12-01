@@ -1,0 +1,49 @@
+[package]
+# fml — acronym of "factorio-mods-localization"
+name = "fml"
+version = "1.0.0"
+authors = ["Dmitry Murzin <diralik@yandex.ru>"]
+edition = "2021"
+default-run = "fml"
+
+[profile.dev]
+debug = true
+[profile.release]
+debug = true
+[profile.test]
+debug = true
+
+[profile.dev.package."*"]
+opt-level = 3
+debug = true
+[profile.release.package."*"]
+opt-level = 3
+debug = true
+[profile.test.package."*"]
+opt-level = 3
+debug = true
+
+[dependencies]
+async-trait = "0.1.74"
+dotenv = "0.15.0"
+hex = "0.4.3"
+hmac = { version = "0.12.1", features = ["std"] }
+http = "0.2.9"
+hyper = "0.14.27"
+jsonwebtoken = "8.3.0"
+log = "0.4.20"
+octocrab = { version = "0.31.2", features = ["stream"] }
+pretty_env_logger = "0.5.0"
+regex = { version = "1.10.2", features = ["pattern"] }
+reqwest = { version = "0.11.22", features = ["json"] }
+rocket = { version = "=0.5.0-rc.3", default-features = false, features = ["json"] }
+secrecy = "0.8.0"
+# Disable debug-images feature - https://github.com/getsentry/sentry-rust/issues/574
+sentry = { version = "0.31.8", default-features = false, features = ["backtrace", "contexts", "panic", "transport", "log"] }
+sentry-log = "0.31.8"
+serde = "1.0.190"
+serde_json = "1.0.108"
+sha2 = "0.10.8"
+tempfile = "3.8.1"
+tokio = { version = "1.33.0" }
+zip = { version = "0.6.0", default-features = false, features = ["deflate"] }

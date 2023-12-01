@@ -65,8 +65,3 @@
 * Logs format:
 
         [action-name] [repository-name] comment
-
-## Dependencies updates
-* `axios` must not be updated to v19 because of https://github.com/axios/axios/issues/2190
-* `form-data` possible should not be updated to v3: https://github.com/form-data/form-data/issues/462
-* `pg` possible should not be update to v8, can't manage to apply migration guide https://node-postgres.com/announcements#2020-02-25
