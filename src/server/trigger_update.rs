@@ -29,7 +29,7 @@ pub async fn trigger_update(repo: Option<String>, secret: Option<String>) -> &'s
     }
 }
 
-async fn get_trigger_update_mutex() -> impl Drop {
+pub async fn get_trigger_update_mutex() -> impl Drop {
     // Note that tokio Mutex doesn't poisoning in contrast to stdlib Mutex.
     // This means that it will work correctly if thread panicked.
     use tokio::sync::Mutex;
