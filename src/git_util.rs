@@ -5,6 +5,8 @@ use std::process::Command;
 
 use log::warn;
 
+use crate::github::GITHUB_BRANCH_NAME;
+
 pub fn clone(url: &str, path: &Path) {
     execute_git_command(
         &path,
@@ -23,30 +25,30 @@ pub fn add_all_and_check_has_changes(path: &Path) -> bool {
     has_changes(path)
 }
 
-pub fn commit_and_push(path: &Path) {
-    let message = dotenv::var("GIT_COMMIT_MESSAGE").unwrap();
-    commit(path, &message);
-    push(path);
-}
-
 fn add_all(path: &Path) {
     execute_git_command(&path, &["add", "."], true);
 }
 
-fn commit(path: &Path, message: &str) {
+pub fn commit(path: &Path) {
     let name = dotenv::var("GIT_COMMIT_USER_NAME").unwrap();
     let email = dotenv::var("GIT_COMMIT_USER_EMAIL").unwrap();
+    let message = dotenv::var("GIT_COMMIT_MESSAGE").unwrap();
     let args = &[
         "-c", &format!("user.name='{}'", name),
         "-c", &format!("user.email='{}'", email),
         "commit",
-        "-m", message
+        "-m", &message
     ];
     execute_git_command(&path, args, true);
 }
 
-fn push(path: &Path) {
+pub fn push(path: &Path) {
     execute_git_command(&path, &["push"], false)
+}
+
+pub fn push_to_crowdin_branch(path: &Path) {
+    let refspec = format!("HEAD:{}", GITHUB_BRANCH_NAME);
+    execute_git_command(&path, &["push", "origin", &refspec, "--force"], true)
 }
 
 fn has_changes(path: &Path) -> bool {

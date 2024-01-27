@@ -1,5 +1,6 @@
 #![feature(async_fn_in_trait)]
 #![feature(lazy_cell)]
+#![feature(let_chains)]
 
 pub mod crowdin;
 pub mod git_util;

@@ -2,14 +2,18 @@ use std::path::Path;
 
 use jsonwebtoken::EncodingKey;
 use log::info;
-use octocrab::{Octocrab, Page};
+use octocrab::{Error, Octocrab, Page};
 use octocrab::models::{AppId, Installation, InstallationId, Repository};
+use octocrab::models::pulls::PullRequest;
 use rocket::serde::Deserialize;
 use serde::de::DeserializeOwned;
 
 use crate::{git_util, util};
 use crate::mod_directory::ModDirectory;
 use crate::util::EmptyBody;
+
+pub const GITHUB_BRANCH_NAME: &str = "crowdin-fml";
+const MAX_PER_PAGE: u8 = 100;
 
 fn get_credentials() -> (AppId, EncodingKey) {
     let github_app_id: u64 = dotenv::var("GITHUB_APP_ID").unwrap().parse().unwrap();
@@ -35,8 +39,6 @@ pub async fn as_installation_for_user(login: &str) -> Octocrab {
         .id;
     api.installation(installation_id)
 }
-
-const MAX_PER_PAGE: u8 = 100;
 
 pub async fn get_installation_id_for_user(login: &str) -> InstallationId {
     let api = as_app();
@@ -144,7 +146,33 @@ async fn clone_repository_to(full_name: &str, installation_id: InstallationId, p
     git_util::clone(&url, path);
 }
 
-async fn get_default_branch(installation_api: &Octocrab, full_name: &str) -> String {
+pub async fn create_pull_request(installation_api: &Octocrab, full_name: &str, default_branch: &str) {
+    let (owner, repo) = full_name.split_once('/').unwrap();
+    let title = "Update translations from Crowdin";
+    let body = "See https://github.com/dima74/factorio-mods-localization for details";
+    let result = installation_api
+        .pulls(owner, repo)
+        .create(title, GITHUB_BRANCH_NAME, default_branch)
+        .body(body)
+        .maintainer_can_modify(true)
+        .send().await;
+    check_create_pull_request_response(result, &full_name);
+}
+
+fn check_create_pull_request_response(result: octocrab::Result<PullRequest>, full_name: &str) {
+    let Err(err) = result else { return; };
+    if let Error::GitHub { source, .. } = &err {
+        if source.message.starts_with("A pull request already exists for") {
+            return;  // PR exists - no need to reopen, force push is enough
+        }
+        if source.message.starts_with("Resource not accessible by integration") {
+            return;  // Means that user not yet accepted new "pull requests" permission for the app
+        }
+    }
+    panic!("[{}] Can't create pull request: {}", full_name, err);
+}
+
+pub async fn get_default_branch(installation_api: &Octocrab, full_name: &str) -> String {
     #[derive(Deserialize)]
     struct Response { default_branch: String }
     let url = format!("/repos/{}", full_name);
@@ -152,12 +180,7 @@ async fn get_default_branch(installation_api: &Octocrab, full_name: &str) -> Str
     response.default_branch
 }
 
-pub async fn is_default_branch_protected(installation_api: &Octocrab, full_name: &str) -> bool {
-    let branch = get_default_branch(installation_api, full_name).await;
-    is_branch_protected(installation_api, full_name, &branch).await
-}
-
-async fn is_branch_protected(installation_api: &Octocrab, full_name: &str, branch: &str) -> bool {
+pub async fn is_branch_protected(installation_api: &Octocrab, full_name: &str, branch: &str) -> bool {
     #[derive(Deserialize)]
     struct Response { protected: bool }
     let url = format!("/repos/{}/branches/{}", full_name, branch);

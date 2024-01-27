@@ -2,7 +2,7 @@ use std::fs;
 use std::path::Path;
 use std::sync::LazyLock;
 
-use log::{info, warn};
+use log::info;
 use octocrab::models::InstallationId;
 use rocket::get;
 use tempfile::TempDir;
@@ -82,12 +82,16 @@ async fn push_repository_crowdin_changes_to_github_impl(
     let are_changes_exists = git_util::add_all_and_check_has_changes(path);
     if are_changes_exists {
         info!("[update-github-from-crowdin] [{}] found changes", full_name);
+        git_util::commit(path);
         let installation_api = github::as_installation(installation_id);
-        let is_protected = github::is_default_branch_protected(&installation_api, &full_name).await;
+        let default_branch = github::get_default_branch(&installation_api, &full_name).await;
+        let is_protected = github::is_branch_protected(&installation_api, &full_name, &default_branch).await;
         if is_protected {
-            warn!("[update-github-from-crowdin] [{}] can't push because branch is protected", full_name);
+            git_util::push_to_crowdin_branch(path);
+            github::create_pull_request(&installation_api, &full_name, &default_branch).await;
+            info!("[update-github-from-crowdin] [{}] pushed to crowdin-fml branch and created PR", full_name);
         } else {
-            git_util::commit_and_push(path);
+            git_util::push(path);
             info!("[update-github-from-crowdin] [{}] pushed", full_name);
         }
     } else {
