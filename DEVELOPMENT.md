@@ -56,6 +56,10 @@ Fml-test id: 613717
 Api key for both: 2ad62d...
 
 
+## Weekly updates from crowdin to github
+https://cron-job.org/
+
+
 ## .cfg/.ini files format
 Factorio uses .cfg extension, Crowdin uses .ini extension, so we just change the extension when needed
 
@@ -82,7 +86,3 @@ Notes:
   line3=
   ```
   Probably our helper should replace it to `key=line1\nline2\nline3`
-
-
-## Branch protection rules
-If push to master is not allowed, then we will force push to `crowdin-fml` branch, and create PR from that branch to master if it does not already exist

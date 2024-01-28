@@ -3,12 +3,11 @@
 1. Every week: update github from crowdin
 1. Webhook for every push to update crowdin from github
 
-## Adding github app to repository
-1. Download github repository (just files, without .git folder)
-1. Check for `/locale` and `/locale/en`
+## Installing github app
+1. Find repositories with factorio mod (which has `locale/en` folder)
+1. Clone github repository
 1. Crowdin:
     * check that for each localization file (that is file in directory like `/locale/ru`) there is corresponding english file (in `/locale/en`)
-    * add languages to crowdin project if necessary (crowdin-api/edit-project)
     * crowdin-api/add-directory
     * for each file in `/locale/en`: crowdin-api/add-file
     * for each other `/locale` subfolder
@@ -35,19 +34,21 @@
 1. Make git commit (or break if there are no changes)
 1. Git push
 
+### Branch protection rules
+If push to master is not allowed:
+1. Create fork
+1. Force-push to `crowdin-fml` branch in fork
+1. Create pull request if not yet exists
+
 ## Webhook for every push to update crowdin from github
-1. Check if pushed commits change /locale/en (Note that payload for push webhook contains added/modified/removed files)
-1. For every modified/added file:
+1. Check if pushed commits change `/locale/en` (Note that payload for push webhook contains added/modified/removed files)
+1. For every modified/added english file:
     * check if we have same file on crowdin:
         * yes: crowdin-api/update-file
         * no: crowdin-api/add-file
 1. (Note that for now we will not handle file removing) 
 
 ## Notes
-* We need to run some code every week (update github from crowdin). Standard Heroku scheduler mechanism is really very bad (unreliable, costly and difficult to setup). But Heroku forces our app to restart approximately every 24 hours. So we can just run necessary code on app startup. We would store in postgresql (built-in heroku database) updates time, and on startup checks, if last update time is more than week ago (if so, do update).
-
-* Research: can we make our dyno not sleep if we will every minute send request from our app to itself (via https://factorio-mods-localization.herokuapp.com/)?
-
 * Any localization folder (such as `/locale/en`, `/locale/ru`) may contain subfolder, and we should ignore subfolders, because factorio ignores them too. Here is [example](https://github.com/Karosieben/boblocale/tree/master/locale/en/old).
 
 * In some mods files names doesn't match across localization folders
