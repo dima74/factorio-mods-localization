@@ -1,4 +1,5 @@
-/// Creates directories `temp/compare/english-crowdin` and `temp/compare/english-github` and executes `diff -r` on them.
+/// Creates directories `temp/compare/english-crowdin` and `temp/compare/english-github`.
+/// After you should manually execute `diff -r` on them.
 
 use std::{fs, io};
 use std::fs::File;
@@ -9,6 +10,7 @@ use fml::{crowdin, util};
 use fml::crowdin::{get_crowdin_directory_name, replace_cfg_to_ini};
 use fml::util::escape::escape_strings_in_ini_file;
 
+#[ignore]  // Ignore on CI
 #[tokio::test]
 async fn main() {
     fml::init_with_crowdin().await;
