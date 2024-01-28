@@ -1,4 +1,3 @@
-#![feature(async_fn_in_trait)]
 #![feature(lazy_cell)]
 #![feature(let_chains)]
 
@@ -15,6 +14,7 @@ pub mod sentry;
 pub mod server;
 pub mod util;
 pub mod webhooks;
+pub mod github_mod_name;
 
 pub fn init() {
     dotenv::dotenv().ok();

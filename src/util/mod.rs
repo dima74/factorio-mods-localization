@@ -30,14 +30,6 @@ pub fn get_directory_cfg_files_paths(path: &Path) -> Vec<PathBuf> {
         .collect()
 }
 
-pub fn has_repository_selection_all(repository_selection: &str) -> bool {
-    match repository_selection {
-        "all" => true,
-        "selected" => false,
-        _ => panic!("unexpected repository selection: {}", repository_selection),
-    }
-}
-
 pub async fn download_and_extract_zip_file(url: &str) -> TempDir {
     use zip::ZipArchive;
 

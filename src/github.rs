@@ -6,17 +6,20 @@ use log::info;
 use octocrab::{Error, Octocrab, Page};
 use octocrab::models::{AppId, Installation, InstallationId, Repository};
 use octocrab::models::pulls::PullRequest;
+use octocrab::models::repos::ContentItems;
 use rocket::serde::Deserialize;
 use sentry::Level;
 use serde::de::DeserializeOwned;
 use tokio::time::sleep;
 
-use crate::{git_util, util};
-use crate::mod_directory::ModDirectory;
+use crate::git_util;
+use crate::github_mod_name::{GithubModName, parse_github_mod_names_json};
+use crate::mod_directory::RepositoryDirectory;
 use crate::util::EmptyBody;
 
 pub const GITHUB_USER_NAME: &str = "factorio-mods-helper";
 pub const GITHUB_BRANCH_NAME: &str = "crowdin-fml";
+pub const GITHUB_MODS_FILE_NAME: &str = "factorio-mods-localization.json";
 const MAX_PER_PAGE: u8 = 100;
 
 fn get_credentials() -> (AppId, EncodingKey) {
@@ -60,31 +63,43 @@ pub async fn get_installation_id_for_repo(full_name: &str) -> Option<Installatio
         .ok()
 }
 
-pub async fn has_repository_selection_all(installation_id: InstallationId) -> bool {
-    let installation = as_app().apps().installation(installation_id).await.unwrap();
-    let repository_selection = installation.repository_selection.unwrap();
-    util::has_repository_selection_all(&repository_selection)
+pub async fn extract_mods_from_repositories(installation_api: &Octocrab, repositories: Vec<String>) -> Vec<GithubModName> {
+    let mut result = Vec::new();
+    for repository in repositories {
+        let mods = extract_mods_from_repository(installation_api, &repository).await;
+        result.extend(mods);
+    }
+    result
 }
 
-async fn has_locale_en(installation_api: &Octocrab, full_name: &str) -> bool {
-    let (owner, repo) = full_name.split_once('/').unwrap();
-    let response = installation_api
-        .repos(owner, repo)
-        .get_content()
-        .path("locale/en")
-        .send()
-        .await;
-    match response {
-        Ok(response) => !response.items.is_empty(),
-        Err(_) => false,
+pub async fn extract_mods_from_repository(installation_api: &Octocrab, full_name: &str) -> Vec<GithubModName> {
+    let root_items = get_content(installation_api, full_name, "").await.unwrap();
+    if root_items.items.iter().any(|it| it.name == GITHUB_MODS_FILE_NAME) {
+        let mods_file = get_content(installation_api, full_name, GITHUB_MODS_FILE_NAME).await.unwrap();
+        let json = mods_file.items[0].decoded_content().unwrap();
+        parse_github_mod_names_json(full_name, &json)
+    } else {
+        let locale_en_items = get_content(installation_api, full_name, "locale/en").await;
+        match locale_en_items {
+            Ok(locale_en_items) if !locale_en_items.items.is_empty() => {
+                vec![GithubModName::new(full_name, None)]
+            }
+            _ => vec![],
+        }
     }
 }
 
-pub async fn filter_repositories_with_locale_en(installation_api: &Octocrab, repositories: Vec<String>) -> Vec<String> {
-    let mut result = Vec::new();
-    for repository in repositories {
-        if has_locale_en(installation_api, &repository).await {
-            result.push(repository);
+async fn get_content(installation_api: &Octocrab, full_name: &str, path: &str) -> octocrab::Result<ContentItems> {
+    let (owner, repo) = full_name.split_once('/').unwrap();
+    let result = installation_api
+        .repos(owner, repo)
+        .get_content()
+        .path(path)
+        .send()
+        .await;
+    if path == "" && let Err(Error::GitHub { source, .. }) = &result {
+        if source.errors == None && source.message == "This repository is empty." {
+            return Ok(ContentItems { items: vec![] });
         }
     }
     result
@@ -107,38 +122,40 @@ pub async fn get_all_installations(api: &Octocrab) -> Vec<Installation> {
         .all_pages(api).await.unwrap()
 }
 
-pub async fn get_all_repositories(api: &Octocrab) -> Vec<(String, InstallationId)> {
+pub async fn get_all_repositories(api: &Octocrab) -> Vec<(String, Vec<GithubModName>, InstallationId)> {
     let mut result = Vec::new();
     let installations = get_all_installations(api).await;
     for installation in installations {
         let installation_api = api.installation(installation.id);
-        let repositories = get_repositories_of_installation(&installation_api).await;
+        let repositories = get_all_repositories_of_installation(&installation_api).await;
         for repository in repositories {
-            result.push((repository, installation.id));
+            let mods = extract_mods_from_repository(&installation_api, &repository).await;
+            if !mods.is_empty() {
+                result.push((repository, mods, installation.id));
+            }
         }
     }
     result
 }
 
-pub async fn get_repositories_of_installation(installation_api: &Octocrab) -> Vec<String> {
+async fn get_all_repositories_of_installation(installation_api: &Octocrab) -> Vec<String> {
     let parameters = serde_json::json!({"per_page": MAX_PER_PAGE});
     let repositories: Page<Repository> = installation_api
         .get("/installation/repositories", Some(&parameters)).await.unwrap();
     let repositories = repositories.all_pages(&installation_api).await.unwrap();
-    let repositories = repositories
+    repositories
         .into_iter()
         .filter(|it| !it.private.unwrap())
         .map(|it| it.full_name.unwrap())
-        .collect();
-    filter_repositories_with_locale_en(installation_api, repositories).await
+        .collect()
 }
 
-pub async fn clone_repository(full_name: &str, installation_id: InstallationId) -> ModDirectory {
+pub async fn clone_repository(full_name: &str, installation_id: InstallationId) -> RepositoryDirectory {
     info!("[{}] clone repository", full_name);
     use tempfile::TempDir;
     let directory = TempDir::with_prefix("FML.").unwrap();
     clone_repository_to(full_name, installation_id, directory.path()).await;
-    ModDirectory::new(full_name, directory)
+    RepositoryDirectory::new(full_name, directory)
 }
 
 async fn clone_repository_to(full_name: &str, installation_id: InstallationId, path: &Path) {
@@ -261,7 +278,7 @@ pub async fn get_not_starred_repositories() -> Vec<String> {
 
     let api_personal = as_personal_account();
     let mut not_starred = Vec::new();
-    for (full_name, _id) in repositories {
+    for (full_name, _mods, _id) in repositories {
         if !is_repository_starred(&api_personal, &full_name).await {
             not_starred.push(full_name);
         }
@@ -276,7 +293,20 @@ mod tests {
     #[tokio::test]
     async fn test_has_locale_en() {
         let api = as_installation_for_user("dima74").await;
-        assert!(has_locale_en(&api, "dima74/factorio-mod-example").await);
-        assert!(!has_locale_en(&api, "dima74/factorio-mods-localization").await);
+        assert_eq!(
+            extract_mods_from_repository(&api, "dima74/factorio-mod-example").await,
+            vec![GithubModName::new("dima74/factorio-mod-example", None)],
+        );
+        assert_eq!(
+            extract_mods_from_repository(&api, "dima74/factorio-multimod-example").await,
+            vec![
+                GithubModName::new("dima74/factorio-multimod-example", Some("Mod1".to_owned())),
+                GithubModName::new("dima74/factorio-multimod-example", Some("Mod2".to_owned())),
+            ],
+        );
+        assert_eq!(
+            extract_mods_from_repository(&api, "dima74/factorio-mods-localization").await,
+            vec![],
+        );
     }
 }

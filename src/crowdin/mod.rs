@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use tempfile::TempDir;
 
 use crate::crowdin::http::{crowdin_get_empty_query, crowdin_get_pagination, crowdin_get_pagination_empty_query, crowdin_post, crowdin_put, DataWrapper, IdResponse, UnitResponse, upload_file_to_storage};
+use crate::github_mod_name::GithubModName;
 use crate::mod_directory::{LanguageCode, ModDirectory};
 use crate::util;
 
@@ -78,13 +79,22 @@ pub async fn create_directory(name: &str) -> DirectoryId {
     crowdin_post::<_, IdResponse>("/directories", request).await.id
 }
 
-pub async fn filter_repositories(repositories: Vec<(String, InstallationId)>) -> Vec<(String, InstallationId)> {
+pub async fn filter_repositories(
+    repositories: Vec<(String, Vec<GithubModName>, InstallationId)>
+) -> Vec<(String, Vec<GithubModName>, InstallationId)> {
     let directories = list_directories().await
         .map(|(name, _id)| name)
         .collect::<HashSet<_>>();
     return repositories
         .into_iter()
-        .filter(|(name, _api)| directories.contains(&get_crowdin_directory_name(name)))
+        .map(|(name, mods, api)| {
+            let mods = mods
+                .into_iter()
+                .filter(|it| directories.contains(&get_crowdin_directory_name(it)))
+                .collect::<Vec<_>>();
+            (name, mods, api)
+        })
+        .filter(|(_name, mods, _api)| !mods.is_empty())
         .collect();
 }
 
@@ -197,19 +207,17 @@ pub struct CrowdinDirectory {
     crowdin_id: DirectoryId,
     #[allow(unused)]
     crowdin_name: String,
-    github_name: String,
     pub mod_directory: ModDirectory,
 }
 
 impl CrowdinDirectory {
     pub async fn get_or_create(mod_directory: ModDirectory) -> (CrowdinDirectory, bool) {
-        let github_name = mod_directory.github_full_name.to_owned();
-        let crowdin_name = get_crowdin_directory_name(&github_name);
+        let crowdin_name = get_crowdin_directory_name(&mod_directory.github_name);
         let (crowdin_id, created) = match find_directory_id(&crowdin_name).await {
             Some(crowdin_id) => (crowdin_id, false),
             None => (create_directory(&crowdin_name).await, true),
         };
-        (Self { crowdin_id, crowdin_name, github_name, mod_directory }, created)
+        (Self { crowdin_id, crowdin_name, mod_directory }, created)
     }
 
     pub async fn on_repository_added(&self) {
@@ -286,7 +294,7 @@ impl CrowdinDirectory {
     }
 
     async fn upload_file_to_storage(&self, file: &Path, file_name: &str) -> StorageId {
-        info!("[{}] upload file to storage: {}/{}", self.github_name, util::file_name(file.parent().unwrap()), file_name);
+        info!("[{}] upload file to storage: {}/{}", self.mod_directory.github_name, util::file_name(file.parent().unwrap()), file_name);
         let file_content = fs::read_to_string(file).unwrap();
         let file_content = util::escape::escape_strings_in_ini_file(&file_content);
         upload_file_to_storage(file_content, file_name).await
@@ -311,9 +319,17 @@ pub fn is_correct_language_code(code: &str) -> bool {
     codes.iter().any(|it| it == code)
 }
 
-pub fn get_crowdin_directory_name(full_name: &str) -> String {
-    let (owner, repo) = full_name.split_once('/').unwrap();
-    format!("{} ({})", util::case::to_title_case(repo), owner)
+pub fn get_crowdin_directory_name(github_name: &GithubModName) -> String {
+    use util::case::to_title_case;
+    let repo = to_title_case(&github_name.repo);
+    match &github_name.subpath {
+        None => {
+            format!("{} ({})", repo, github_name.owner)
+        }
+        Some(subpath) => {
+            format!("{} - {} ({})", repo, to_title_case(subpath), github_name.owner)
+        }
+    }
 }
 
 pub fn replace_cfg_to_ini(name: &str) -> String {
