@@ -1,0 +1,39 @@
+name: check
+
+on:
+  workflow_dispatch:
+  schedule:
+    # every day at 03:45 UTC
+    - cron: "45 03 * * *"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up cargo cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      - name: Build
+        run: cargo build --verbose
+      - name: Run tests
+        run: cargo test --verbose
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_API_KEY: ${{ secrets.CROWDIN_API_KEY }}
+          # Note that secrets are not allowed to start with GITHUB_, so added MY_ prefix
+          GITHUB_APP_ID: ${{ secrets.MY_GITHUB_APP_ID }}
+          GITHUB_APP_PRIVATE_KEY: ${{ secrets.MY_GITHUB_APP_PRIVATE_KEY }}
+          GITHUB_PERSONAL_ACCESS_TOKEN: ${{ secrets.MY_GITHUB_PERSONAL_ACCESS_TOKEN }}
+          RUST_BACKTRACE: 1
