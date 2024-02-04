@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::time::Duration;
 
 use jsonwebtoken::EncodingKey;
 use log::info;
@@ -6,12 +7,15 @@ use octocrab::{Error, Octocrab, Page};
 use octocrab::models::{AppId, Installation, InstallationId, Repository};
 use octocrab::models::pulls::PullRequest;
 use rocket::serde::Deserialize;
+use sentry::Level;
 use serde::de::DeserializeOwned;
+use tokio::time::sleep;
 
 use crate::{git_util, util};
 use crate::mod_directory::ModDirectory;
 use crate::util::EmptyBody;
 
+pub const GITHUB_USER_NAME: &str = "factorio-mods-helper";
 pub const GITHUB_BRANCH_NAME: &str = "crowdin-fml";
 const MAX_PER_PAGE: u8 = 100;
 
@@ -146,13 +150,14 @@ async fn clone_repository_to(full_name: &str, installation_id: InstallationId, p
     git_util::clone(&url, path);
 }
 
-pub async fn create_pull_request(installation_api: &Octocrab, full_name: &str, default_branch: &str) {
+pub async fn create_pull_request(personal_api: &Octocrab, full_name: &str, default_branch: &str) {
     let (owner, repo) = full_name.split_once('/').unwrap();
     let title = "Update translations from Crowdin";
     let body = "See https://github.com/dima74/factorio-mods-localization for details";
-    let result = installation_api
+    let head_branch = format!("{}:{}", GITHUB_USER_NAME, GITHUB_BRANCH_NAME);
+    let result = personal_api
         .pulls(owner, repo)
-        .create(title, GITHUB_BRANCH_NAME, default_branch)
+        .create(title, head_branch, default_branch)
         .body(body)
         .maintainer_can_modify(true)
         .send().await;
@@ -161,15 +166,20 @@ pub async fn create_pull_request(installation_api: &Octocrab, full_name: &str, d
 
 fn check_create_pull_request_response(result: octocrab::Result<PullRequest>, full_name: &str) {
     let Err(err) = result else { return; };
-    if let Error::GitHub { source, .. } = &err {
-        if source.message.starts_with("A pull request already exists for") {
-            return;  // PR exists - no need to reopen, force push is enough
-        }
-        if source.message.starts_with("Resource not accessible by integration") {
-            return;  // Means that user not yet accepted new "pull requests" permission for the app
-        }
+    if is_error_pull_request_already_exists(&err) {
+        // PR exists - no need to reopen, force push is enough
+        return;
     }
     panic!("[{}] Can't create pull request: {}", full_name, err);
+}
+
+fn is_error_pull_request_already_exists(error: &Error) -> bool {
+    let Error::GitHub { source, .. } = &error else { return false; };
+    if source.message != "Validation Failed" { return false; };
+    let Some(&[ref error, ..]) = source.errors.as_deref() else { return false; };
+    let serde_json::Value::Object(error) = error else { return false; };
+    let Some(serde_json::Value::String(message)) = error.get("message") else { return false; };
+    message.starts_with("A pull request already exists for")
 }
 
 pub async fn get_default_branch(installation_api: &Octocrab, full_name: &str) -> String {
@@ -185,7 +195,7 @@ pub async fn is_branch_protected(installation_api: &Octocrab, full_name: &str, b
     struct Response { protected: bool }
     let url = format!("/repos/{}/branches/{}", full_name, branch);
     let result: Response = installation_api.get(&url, None::<&()>).await.unwrap();
-    return result.protected
+    result.protected
 }
 
 pub fn as_personal_account() -> Octocrab {
@@ -194,6 +204,42 @@ pub fn as_personal_account() -> Octocrab {
         .personal_token(personal_token)
         .build()
         .unwrap()
+}
+
+pub async fn fork_repository(personal_api: &Octocrab, owner: &str, repo: &str) -> bool {
+    if let Some(result) = check_fork_exists(&personal_api, owner, repo).await {
+        return result;
+    }
+
+    info!("[update-github-from-crowdin] [{}/{}] forking repository...", owner, repo);
+    personal_api
+        .repos(owner, repo)
+        .create_fork()
+        .send().await.unwrap();
+    sleep(Duration::from_secs(120)).await;
+    true
+}
+
+async fn check_fork_exists(api: &Octocrab, owner: &str, repo: &str) -> Option<bool> {
+    let forks = api
+        .repos(owner, repo)
+        .list_forks()
+        .send().await.unwrap()
+        .all_pages(&api).await.unwrap();
+    for fork in forks {
+        let fork_full_name = fork.full_name.unwrap();
+        let (fork_owner, fork_repo) = fork_full_name.split_once('/').unwrap();
+        if fork_owner == GITHUB_USER_NAME {
+            return if fork_repo == repo {
+                Some(true)  // fork already exists
+            } else {
+                let message = format!("Fork name {} doesn't match repository {}/{}", fork_repo, owner, repo);
+                sentry::capture_message(&message, Level::Error);
+                Some(false)
+            };
+        }
+    }
+    None
 }
 
 pub async fn star_repository(api: &Octocrab, full_name: &str) {

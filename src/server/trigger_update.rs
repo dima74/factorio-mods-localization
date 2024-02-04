@@ -1,14 +1,17 @@
 use std::fs;
 use std::path::Path;
 use std::sync::LazyLock;
+use std::time::Duration;
 
-use log::{info, warn};
+use log::info;
 use octocrab::models::InstallationId;
 use rocket::get;
 use tempfile::TempDir;
+use tokio::time::sleep;
 
 use crate::{crowdin, git_util, github, util};
 use crate::crowdin::{get_crowdin_directory_name, normalize_language_code, replace_ini_to_cfg};
+use crate::github::as_personal_account;
 use crate::mod_directory::ModDirectory;
 
 #[get("/triggerUpdate?<repo>&<secret>")]
@@ -46,7 +49,7 @@ async fn push_repository_crowdin_changes_to_github(full_name: &str) -> &'static 
     let repositories = vec![(full_name.to_owned(), installation_id)];
     let success = push_crowdin_changes_to_github(repositories).await;
     if !success {
-        return "Can't find mod directory on crowdin"
+        return "Can't find mod directory on crowdin";
     }
     info!("[update-github-from-crowdin] [{}] success", full_name);
     "Ok"
@@ -87,11 +90,7 @@ async fn push_repository_crowdin_changes_to_github_impl(
         let default_branch = github::get_default_branch(&installation_api, &full_name).await;
         let is_protected = github::is_branch_protected(&installation_api, &full_name, &default_branch).await;
         if is_protected {
-            // todo fork repository and push to fork
-            warn!("[update-github-from-crowdin] [{}] can't push because branch is protected", full_name);
-            // git_util::push_to_crowdin_branch(path);
-            // github::create_pull_request(&installation_api, &full_name, &default_branch).await;
-            // info!("[update-github-from-crowdin] [{}] pushed to crowdin-fml branch and created PR", full_name);
+            push_changes_using_pull_request(path, &full_name, &default_branch).await;
         } else {
             git_util::push(path);
             info!("[update-github-from-crowdin] [{}] pushed", full_name);
@@ -99,6 +98,18 @@ async fn push_repository_crowdin_changes_to_github_impl(
     } else {
         info!("[update-github-from-crowdin] [{}] no changes found", full_name);
     }
+}
+
+async fn push_changes_using_pull_request(path: &Path, full_name: &str, default_branch: &str) {
+    let personal_api = as_personal_account();
+    let (owner, repo) = full_name.split_once('/').unwrap();
+    if !github::fork_repository(&personal_api, owner, repo).await {
+        return;
+    }
+    git_util::push_to_my_fork(path, repo);
+    sleep(Duration::from_secs(30)).await;
+    github::create_pull_request(&personal_api, &full_name, &default_branch).await;
+    info!("[update-github-from-crowdin] [{}] pushed to crowdin-fml branch and created PR", full_name);
 }
 
 async fn move_translated_files_to_repository(mod_directory: &ModDirectory, translation_directory: &Path) {
