@@ -47,8 +47,10 @@ pub fn push(path: &Path) {
 }
 
 pub fn push_to_crowdin_branch(path: &Path) {
+    execute_git_command(&path, &["push", "-d", "origin", GITHUB_BRANCH_NAME], false);
+
     let refspec = format!("HEAD:{}", GITHUB_BRANCH_NAME);
-    execute_git_command(&path, &["push", "origin", &refspec, "--force"], true)
+    execute_git_command(&path, &["push", "origin", &refspec], true);
 }
 
 fn has_changes(path: &Path) -> bool {
