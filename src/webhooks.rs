@@ -88,7 +88,7 @@ pub async fn on_repository_added(full_name: &str, mods: Vec<GithubModName>, inst
     let repository_directory = github::clone_repository(&full_name, installation_id).await;
     for mod_ in mods {
         let mod_directory = ModDirectory::new(&repository_directory, mod_);
-        if !mod_directory.check_structure() { continue; }
+        if !mod_directory.check_structure(true) { continue; }
 
         let (crowdin_directory, _) = CrowdinDirectory::get_or_create(mod_directory).await;
         crowdin_directory.on_repository_added().await;
@@ -116,18 +116,21 @@ pub async fn on_push_event(
         info!("[push-webhook] [{}] no mods found", full_name);
         return;
     }
+    let mut created = false;
     for mod_ in mods {
         let mod_directory = ModDirectory::new(&repository_directory, mod_);
-        if !mod_directory.check_structure() { continue; }
-        handle_push_event_for_mod(&modified_locale_en_files, mod_directory).await;
+        if !mod_directory.check_structure(false) { continue; }
+        created |= handle_push_event_for_mod(&modified_locale_en_files, mod_directory).await;
     }
     info!("[push-webhook] [{}] success", full_name);
 
-    let api_personal = github::as_personal_account();
-    github::star_repository(&api_personal, &full_name).await;
+    if created {
+        let api_personal = github::as_personal_account();
+        github::star_repository(&api_personal, &full_name).await;
+    }
 }
 
-async fn handle_push_event_for_mod(modified_locale_en_files: &[(&str, &str)], mod_directory: ModDirectory) {
+async fn handle_push_event_for_mod(modified_locale_en_files: &[(&str, &str)], mod_directory: ModDirectory) -> bool {
     let (crowdin_directory, created) = CrowdinDirectory::get_or_create(mod_directory).await;
     if created {
         info!("[push-webhook] [{}] created directory on crowdin - performing full import", crowdin_directory.mod_directory.github_name);
@@ -141,6 +144,7 @@ async fn handle_push_event_for_mod(modified_locale_en_files: &[(&str, &str)], mo
             .collect::<Vec<_>>();
         crowdin_directory.update_english_files(&modified_locale_en_files).await;
     }
+    created
 }
 
 fn get_modified_english_files(event: &PushWebhookEventPayload) -> Option<Vec<(&str, &str)>> {

@@ -8,13 +8,13 @@ use octocrab::models::{AppId, Installation, InstallationId, Repository};
 use octocrab::models::pulls::PullRequest;
 use octocrab::models::repos::ContentItems;
 use rocket::serde::Deserialize;
-use sentry::Level;
 use serde::de::DeserializeOwned;
 use tokio::time::sleep;
 
 use crate::git_util;
 use crate::github_mod_name::{GithubModName, parse_github_mod_names_json};
 use crate::mod_directory::RepositoryDirectory;
+use crate::sentry::sentry_report_error;
 use crate::util::EmptyBody;
 
 pub const GITHUB_USER_NAME: &str = "factorio-mods-helper";
@@ -251,7 +251,7 @@ async fn check_fork_exists(api: &Octocrab, owner: &str, repo: &str) -> Option<bo
                 Some(true)  // fork already exists
             } else {
                 let message = format!("Fork name {} doesn't match repository {}/{}", fork_repo, owner, repo);
-                sentry::capture_message(&message, Level::Error);
+                sentry_report_error(&message);
                 Some(false)
             };
         }

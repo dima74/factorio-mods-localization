@@ -1,3 +1,5 @@
+use log::error;
+use sentry::Level;
 use sentry_log::LogFilter;
 
 // https://docs.sentry.io/platforms/rust/
@@ -25,4 +27,9 @@ pub fn init_logging() {
         });
     log::set_boxed_logger(Box::new(sentry_logger)).unwrap();
     log::set_max_level(max_level);
+}
+
+pub fn sentry_report_error(message: &str) {
+    error!("{}", message);
+    sentry::capture_message(message, Level::Error);
 }

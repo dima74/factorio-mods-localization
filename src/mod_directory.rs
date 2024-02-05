@@ -1,12 +1,11 @@
 use std::path::{Path, PathBuf};
 
-use log::error;
-use sentry::Level;
 use tempfile::TempDir;
 
 use crate::{crowdin, util};
 use crate::github::GITHUB_MODS_FILE_NAME;
 use crate::github_mod_name::{GithubModName, parse_github_mod_names_json};
+use crate::sentry::sentry_report_error;
 
 pub type LanguageCode = String;
 
@@ -65,28 +64,38 @@ impl ModDirectory {
         self.root.join("locale/en")
     }
 
-    pub fn check_structure(&self) -> bool {
-        self.check_for_locale_folder() && self.check_translation_files_match_english_files()
+    pub fn check_structure(&self, report_error: bool) -> bool {
+        self.check_for_locale_folder(report_error) && self.check_translation_files_match_english_files(report_error)
     }
 
-    fn check_for_locale_folder(&self) -> bool {
+    fn check_for_locale_folder(&self, report_error: bool) -> bool {
         if self.locale_en_path().exists() {
             true
         } else {
-            error!("[add-repository] [{}] '/locale/en' subdirectory not found in github repository", self.github_name);
+            if report_error {
+                let message = format!("[add-repository] [{}] '/locale/en' not found", self.github_name);
+                sentry_report_error(&message);
+            }
             false
         }
     }
 
-    fn check_translation_files_match_english_files(&self) -> bool {
+    fn check_translation_files_match_english_files(&self, report_error: bool) -> bool {
         let localizations = self.get_localizations();
         for (language_code, localized_files) in localizations {
             for localized_file in localized_files {
                 let file_name = util::file_name(&localized_file);
                 let english_file = self.locale_en_path().join(file_name);
                 if !english_file.exists() {
-                    let message = format!("[add-repository] [{}] matched english file not found for '{}/{}'", self.github_name, language_code, file_name);
-                    sentry::capture_message(&message, Level::Error);
+                    if report_error {
+                        let message = format!(
+                            "[add-repository] [{}] matched english file not found for '{}/{}'",
+                            self.github_name,
+                            language_code,
+                            file_name
+                        );
+                        sentry_report_error(&message);
+                    }
                     return false;
                 }
             }
