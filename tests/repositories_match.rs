@@ -1,10 +1,9 @@
 use std::collections::HashSet;
 
 use fml::{crowdin, github};
+use fml::crowdin::get_crowdin_directory_name;
 
-const IGNORED_GITHUB: &[&str] = &[
-    "anyutianluo/factorio-mods-Crowdin-",  // empty repository
-];
+const IGNORED_GITHUB: &[&str] = &[];
 const IGNORED_CROWDIN: &[&str] = &[
     "Factorio Ntech Chemistry (NathaU)",  // not sure what to do with it
 ];
@@ -21,8 +20,9 @@ async fn main() {
     let mut github = github::as_app();
     let github_names = github::get_all_repositories(&mut github).await
         .into_iter()
-        .map(|(full_name, _id)| crowdin::get_crowdin_directory_name(&full_name))
-        .filter(|name| !IGNORED_GITHUB.contains(&name.as_str()))
+        .filter(|(full_name, _mods, _id)| !IGNORED_GITHUB.contains(&full_name.as_str()))
+        .flat_map(|(_full_name, mods, _id)| mods)
+        .map(|it| get_crowdin_directory_name(&it))
         .collect::<HashSet<String>>();
 
     for name in &github_names {

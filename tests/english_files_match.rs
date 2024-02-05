@@ -6,7 +6,7 @@ use std::fs::File;
 use std::io::{Seek, SeekFrom};
 use std::path::Path;
 
-use fml::{crowdin, util};
+use fml::{crowdin, mod_directory, util};
 use fml::crowdin::{get_crowdin_directory_name, replace_cfg_to_ini};
 use fml::util::escape::escape_strings_in_ini_file;
 
@@ -54,21 +54,24 @@ async fn download_github_files() {
     let json = fs::read_to_string(Path::new("temp/repositories.json")).unwrap();
     let repositories: Vec<String> = serde_json::from_str(&json).unwrap();
     for full_name in repositories {
-        let target_directory_name = get_crowdin_directory_name(&full_name);
-        let target_directory = target_root.join(target_directory_name);
-        fs::create_dir(&target_directory).unwrap();
-
         let (_owner, repo) = full_name.split_once('/').unwrap();
-        let source_directory = source_root.join(repo).join("locale/en");
+        let repository_directory = source_root.join(repo);
+        let mods = mod_directory::get_mods_impl(&full_name, &repository_directory);
+        for mod_ in mods {
+            let target_directory_name = get_crowdin_directory_name(&mod_);
+            let target_directory = target_root.join(target_directory_name);
+            fs::create_dir(&target_directory).unwrap();
 
-        for source_path in util::get_directory_cfg_files_paths(&source_directory) {
-            let source_file_name = util::file_name(&source_path);
-            let target_file_name = replace_cfg_to_ini(source_file_name);
-            let target_path = target_directory.join(target_file_name);
+            let source_directory = repository_directory.join("locale/en");
+            for source_path in util::get_directory_cfg_files_paths(&source_directory) {
+                let source_file_name = util::file_name(&source_path);
+                let target_file_name = replace_cfg_to_ini(source_file_name);
+                let target_path = target_directory.join(target_file_name);
 
-            let content = fs::read_to_string(source_path).unwrap();
-            let content = escape_strings_in_ini_file(&content);
-            fs::write(target_path, content).unwrap();
+                let content = fs::read_to_string(source_path).unwrap();
+                let content = escape_strings_in_ini_file(&content);
+                fs::write(target_path, content).unwrap();
+            }
         }
     }
 }

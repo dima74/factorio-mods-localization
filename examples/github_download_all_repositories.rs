@@ -15,7 +15,7 @@ async fn main() {
         let api = fml::github::as_app();
         let repositories = get_all_repositories(&api).await
             .into_iter()
-            .map(|(repository, _id)| repository)
+            .map(|(repository, _mods, _id)| repository)
             .collect::<Vec<_>>();
 
         let json = serde_json::to_string_pretty(&repositories).unwrap();
