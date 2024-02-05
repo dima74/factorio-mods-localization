@@ -97,8 +97,8 @@ async fn get_content(installation_api: &Octocrab, full_name: &str, path: &str) -
         .path(path)
         .send()
         .await;
-    if path == "" && let Err(Error::GitHub { source, .. }) = &result {
-        if source.errors == None && source.message == "This repository is empty." {
+    if let Err(Error::GitHub { source, .. }) = &result {
+        if path == "" && source.errors == None && source.message == "This repository is empty." {
             return Ok(ContentItems { items: vec![] });
         }
     }

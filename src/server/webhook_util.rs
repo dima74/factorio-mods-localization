@@ -18,7 +18,7 @@ impl<'r> FromData<'r> for GithubEvent {
             Ok(result) => Outcome::Success(result),
             Err(err) => {
                 let message = format!("{}", err);
-                Outcome::Failure((Status::BadRequest, message))
+                Outcome::Error((Status::BadRequest, message))
             }
         }
     }

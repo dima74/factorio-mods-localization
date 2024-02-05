@@ -1,5 +1,4 @@
 #![feature(lazy_cell)]
-#![feature(let_chains)]
 
 /// General overview of the process:
 /// 1. GitHub app installed - [webhooks::on_repositories_added]
