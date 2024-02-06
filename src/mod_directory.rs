@@ -103,22 +103,21 @@ impl ModDirectory {
     }
 
     pub fn get_localizations(&self) -> Vec<(LanguageCode, Vec<PathBuf>)> {
-        self.get_language_codes()
+        self.get_language_directories()
             .into_iter()
-            .filter(|code| code != "en")
-            .map(|code| {
-                let path = self.locale_path().join(&code);
+            .filter(|(code, _path)| code != "en")
+            .map(|(code, path)| {
                 let files = util::get_directory_cfg_files_paths(&path);
                 (code, files)
             })
             .collect()
     }
 
-    fn get_language_codes(&self) -> Vec<String> {
+    fn get_language_directories(&self) -> Vec<(LanguageCode, PathBuf)> {
         util::read_dir(&self.locale_path())
             .filter(|(path, _name)| path.is_dir())
-            .map(|(_path, name)| crowdin::normalize_language_code(&name))
-            .filter(|code| crowdin::is_correct_language_code(code))
+            .map(|(path, name)| (crowdin::normalize_language_code(&name), path))
+            .filter(|(code, _path)| crowdin::is_correct_language_code(code))
             .collect()
     }
 }
