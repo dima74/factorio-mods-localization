@@ -132,7 +132,7 @@ pub async fn on_push_event(
 
 async fn handle_push_event_for_mod(mod_directory: ModDirectory) -> bool {
     let exists = CrowdinDirectory::has_existing(&mod_directory).await;
-    if !exists && !mod_directory.check_translation_files_match_english_files() {
+    if !exists && !mod_directory.check_translation_files_match_english_files(true) {
         return false;
     }
 

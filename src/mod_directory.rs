@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use log::error;
 
 use tempfile::TempDir;
 
@@ -65,14 +66,14 @@ impl ModDirectory {
     }
 
     pub fn check_structure(&self) -> bool {
-        self.check_for_locale_folder() && self.check_translation_files_match_english_files()
+        self.check_for_locale_folder() && self.check_translation_files_match_english_files(true)
     }
 
     pub fn check_for_locale_folder(&self) -> bool {
         self.locale_en_path().exists()
     }
 
-    pub fn check_translation_files_match_english_files(&self) -> bool {
+    pub fn check_translation_files_match_english_files(&self, report_sentry: bool) -> bool {
         let localizations = self.get_localizations();
         for (language_code, localized_files) in localizations {
             for localized_file in localized_files {
@@ -85,7 +86,11 @@ impl ModDirectory {
                         language_code,
                         file_name
                     );
-                    sentry_report_error(&message);
+                    if report_sentry {
+                        sentry_report_error(&message);
+                    } else {
+                        error!("{}", message);
+                    }
                     return false;
                 }
             }

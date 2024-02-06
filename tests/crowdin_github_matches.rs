@@ -17,8 +17,8 @@ async fn main() {
         .filter(|name| !IGNORED_CROWDIN.contains(&name.as_str()))
         .collect::<HashSet<String>>();
 
-    let mut github = github::as_app();
-    let github_names = github::get_all_repositories(&mut github).await
+    let api = github::as_app();
+    let github_names = github::get_all_repositories(&api).await
         .into_iter()
         .filter(|(full_name, _mods, _id)| !IGNORED_GITHUB.contains(&full_name.as_str()))
         .flat_map(|(_full_name, mods, _id)| mods)
