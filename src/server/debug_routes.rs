@@ -1,9 +1,7 @@
 use rocket::get;
 
-use crate::{github, webhooks};
-use crate::github::extract_mods_from_repository;
-use crate::github_mod_name::GithubModName;
-use crate::server::trigger_update::get_trigger_update_mutex;
+use crate::server::trigger_update::{get_installation_id_and_mods, get_trigger_update_mutex};
+use crate::webhooks;
 
 /// For cases when repository was not imported correctly for some reason and manual intervention is needed
 #[get("/importRepository?<repo>&<subpath>&<secret>")]
@@ -15,22 +13,30 @@ pub async fn import_repository(
     if secret != Some(dotenv::var("WEBSERVER_SECRET").unwrap()) {
         return "Missing secret";
     }
-
     let _lock = get_trigger_update_mutex().await;
-    let installation_id = match github::get_installation_id_for_repo(&repo).await {
-        Some(id) => id,
-        None => return "Can't find installation for repository",
+    let (installation_id, mods) = match get_installation_id_and_mods(&repo, subpath).await {
+        Ok(value) => value,
+        Err(value) => return value,
     };
-
-    let mods = if subpath.is_some() {
-        vec![GithubModName::new(&repo, subpath)]
-    } else {
-        let api = github::as_installation(installation_id);
-        extract_mods_from_repository(&api, &repo).await
-    };
-    if mods.is_empty() {
-        return "No mods.";
-    }
     webhooks::on_repository_added(&repo, mods, installation_id).await;
+    "Ok."
+}
+
+/// Overwrites all english file on crowdin based on github
+#[get("/importEnglish?<repo>&<subpath>&<secret>")]
+pub async fn import_english(
+    repo: String,
+    subpath: Option<String>,
+    secret: Option<String>,
+) -> &'static str {
+    if secret != Some(dotenv::var("WEBSERVER_SECRET").unwrap()) {
+        return "Missing secret";
+    }
+    let _lock = get_trigger_update_mutex().await;
+    let (installation_id, mods) = match get_installation_id_and_mods(&repo, subpath).await {
+        Ok(value) => value,
+        Err(value) => return value,
+    };
+    webhooks::import_english(&repo, mods, installation_id).await;
     "Ok."
 }

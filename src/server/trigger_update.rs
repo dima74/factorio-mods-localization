@@ -11,7 +11,7 @@ use tokio::time::sleep;
 
 use crate::{crowdin, git_util, github, util};
 use crate::crowdin::{get_crowdin_directory_name, normalize_language_code, replace_ini_to_cfg};
-use crate::github::as_personal_account;
+use crate::github::{as_personal_account, extract_mods_from_repository};
 use crate::github_mod_name::GithubModName;
 use crate::mod_directory::ModDirectory;
 
@@ -26,8 +26,7 @@ pub async fn trigger_update(
     }
     match repo {
         Some(repo) => {
-            let github_name = GithubModName::new(&repo, subpath);
-            trigger_update_single_repository(&repo, github_name).await
+            trigger_update_single_repository(&repo, subpath).await
         }
         None => {
             let task = trigger_update_all_repositories();
@@ -46,19 +45,41 @@ pub async fn get_trigger_update_mutex() -> impl Drop {
     MUTEX.lock().await
 }
 
-async fn trigger_update_single_repository(full_name: &str, github_name: GithubModName) -> &'static str {
+async fn trigger_update_single_repository(full_name: &str, subpath: Option<String>) -> &'static str {
     let _lock = get_trigger_update_mutex().await;
     info!("\n[update-github-from-crowdin] [{}] starting...", full_name);
-    let Some(installation_id) = github::get_installation_id_for_repo(full_name).await else {
-        return "Can't find github installation";
+    let (installation_id, mods) = match get_installation_id_and_mods(&full_name, subpath).await {
+        Ok(value) => value,
+        Err(message) => return message,
     };
-    let repositories = vec![(full_name.to_owned(), vec![github_name], installation_id)];
+    let repositories = vec![(full_name.to_owned(), mods, installation_id)];
     let success = push_crowdin_changes_to_repositories(repositories).await;
     if !success {
         return "Can't find mod directory on crowdin";
     }
     info!("[update-github-from-crowdin] [{}] success", full_name);
     "Ok"
+}
+
+pub async fn get_installation_id_and_mods(
+    repo: &str,
+    subpath: Option<String>,
+) -> Result<(InstallationId, Vec<GithubModName>), &'static str> {
+    let installation_id = match github::get_installation_id_for_repo(&repo).await {
+        Some(id) => id,
+        None => return Err("Can't find installation for repository"),
+    };
+
+    let mods = if subpath.is_some() {
+        vec![GithubModName::new(&repo, subpath)]
+    } else {
+        let api = github::as_installation(installation_id);
+        extract_mods_from_repository(&api, &repo).await
+    };
+    if mods.is_empty() {
+        return Err("No mods.");
+    }
+    Ok((installation_id, mods))
 }
 
 async fn trigger_update_all_repositories() {

@@ -35,6 +35,7 @@ pub async fn main() {
         trigger_update::trigger_update,
         version,
         debug_routes::import_repository,
+        debug_routes::import_english,
         example_error_routes::error1,
         example_error_routes::error2,
     ];

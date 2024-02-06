@@ -93,9 +93,19 @@ pub async fn on_repository_added(full_name: &str, mods: Vec<GithubModName>, inst
         let (crowdin_directory, _) = CrowdinDirectory::get_or_create(mod_directory).await;
         crowdin_directory.add_english_and_localization_files().await;
     }
-    // explicit drop to ensure that cloned directory is deleted only here
-    drop(repository_directory);
     info!("[add-repository] [{}] success", full_name);
+}
+
+pub async fn import_english(full_name: &str, mods: Vec<GithubModName>, installation_id: InstallationId) {
+    let repository_directory = github::clone_repository(&full_name, installation_id).await;
+    for mod_ in mods {
+        let mod_directory = ModDirectory::new(&repository_directory, mod_);
+        if !mod_directory.check_for_locale_folder() { continue; }
+
+        if !CrowdinDirectory::has_existing(&mod_directory).await { continue; }
+        let (crowdin_directory, _) = CrowdinDirectory::get_or_create(mod_directory).await;
+        crowdin_directory.add_english_files().await;
+    }
 }
 
 pub async fn on_push_event(

@@ -4,6 +4,7 @@
 * `/triggerUpdate?secret=X` - Update all repositories
 * `/triggerUpdate?secret=X&repo=REPO` - Update specific repository
 * `/importRepository?secret=X&repo=REPO` - Readd repository to Crowdin (both english files and translations)
+* `/importEnglish?secret=X&repo=REPO` - Overwrites english files on Crowdin based on GitHub
 
 
 ## Heroku configuration
