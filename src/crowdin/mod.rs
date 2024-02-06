@@ -225,12 +225,12 @@ impl CrowdinDirectory {
         find_directory_id(&crowdin_name).await.is_some()
     }
 
-    pub async fn on_repository_added(&self) {
+    pub async fn add_english_and_localization_files(&self) {
         let english_file_ids = self.add_english_files().await;
         self.add_localization_files(english_file_ids).await;
     }
 
-    async fn add_english_files(&self) -> HashMap<String, FileId> {
+    pub async fn add_english_files(&self) -> HashMap<String, FileId> {
         let existing_crowdin_files: HashMap<String, FileId> = list_files(self.crowdin_id).await.collect();
         let mut result = HashMap::new();
         for file_path in self.mod_directory.get_english_files() {
@@ -239,15 +239,6 @@ impl CrowdinDirectory {
             result.insert(file_name_ini, file_id);
         }
         result
-    }
-
-    pub async fn update_english_files(&self, file_names: &[&str]) {
-        let existing_crowdin_files: HashMap<String, FileId> = list_files(self.crowdin_id).await.collect();
-        for &file_name_cfg in file_names {
-            let file_path = self.mod_directory.locale_en_path().join(file_name_cfg);
-            let file_name_ini = replace_cfg_to_ini(file_name_cfg);
-            self.add_or_update_english_file(&existing_crowdin_files, &file_path, &file_name_ini).await;
-        }
     }
 
     async fn add_or_update_english_file(

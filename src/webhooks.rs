@@ -91,7 +91,7 @@ pub async fn on_repository_added(full_name: &str, mods: Vec<GithubModName>, inst
         if !mod_directory.check_structure() { continue; }
 
         let (crowdin_directory, _) = CrowdinDirectory::get_or_create(mod_directory).await;
-        crowdin_directory.on_repository_added().await;
+        crowdin_directory.add_english_and_localization_files().await;
     }
     // explicit drop to ensure that cloned directory is deleted only here
     drop(repository_directory);
@@ -105,7 +105,7 @@ pub async fn on_push_event(
 ) {
     info!("\n[push-webhook] [{}] starting...", full_name);
 
-    let Some(modified_locale_en_files) = get_modified_english_files(&event) else {
+    if !has_interesting_changes(&event) {
         info!("[push-webhook] [{}] no modified/added english files found", full_name);
         return;
     };
@@ -120,7 +120,7 @@ pub async fn on_push_event(
     for mod_ in mods {
         let mod_directory = ModDirectory::new(&repository_directory, mod_);
         if !mod_directory.check_for_locale_folder() { continue; }
-        created |= handle_push_event_for_mod(&modified_locale_en_files, mod_directory).await;
+        created |= handle_push_event_for_mod(mod_directory).await;
     }
     info!("[push-webhook] [{}] success", full_name);
 
@@ -130,7 +130,7 @@ pub async fn on_push_event(
     }
 }
 
-async fn handle_push_event_for_mod(modified_locale_en_files: &[(&str, &str)], mod_directory: ModDirectory) -> bool {
+async fn handle_push_event_for_mod(mod_directory: ModDirectory) -> bool {
     let exists = CrowdinDirectory::has_existing(&mod_directory).await;
     if !exists && !mod_directory.check_translation_files_match_english_files() {
         return false;
@@ -139,49 +139,18 @@ async fn handle_push_event_for_mod(modified_locale_en_files: &[(&str, &str)], mo
     let (crowdin_directory, created) = CrowdinDirectory::get_or_create(mod_directory).await;
     if created {
         info!("[push-webhook] [{}] created directory on crowdin - performing full import", crowdin_directory.mod_directory.github_name);
-        crowdin_directory.on_repository_added().await;
+        crowdin_directory.add_english_and_localization_files().await;
     } else {
-        let expected_subpath = crowdin_directory.mod_directory.github_name.subpath.as_deref().unwrap_or("");
-        let modified_locale_en_files = modified_locale_en_files
-            .into_iter()
-            .filter(|(subpath, _file)| *subpath == expected_subpath)
-            .map(|(_subpath, file)| *file)
-            .collect::<Vec<_>>();
-        crowdin_directory.update_english_files(&modified_locale_en_files).await;
+        crowdin_directory.add_english_files().await;
     }
     created
 }
 
-fn get_modified_english_files(event: &PushWebhookEventPayload) -> Option<Vec<(&str, &str)>> {
+fn has_interesting_changes(event: &PushWebhookEventPayload) -> bool {
     let mut changed_files = get_all_changed_files(&event);
-    let changed_mods_file = changed_files.any(|it| it == GITHUB_MODS_FILE_NAME);
-
-    let modified_files = get_all_modified_and_added_files(&event);
-    let modified_locale_en_files = modified_files
-        .filter_map(|file| {
-            match file.strip_prefix("locale/en/") {
-                Some(file) => Some(("", file)),
-                None => file.split_once("/locale/en/"),
-            }
-        })
-        .filter(|(subpath, file)| {
-            file.ends_with(".cfg") && !file.contains("/") && !subpath.contains("/")
-        })
-        .collect::<Vec<_>>();
-    if !modified_locale_en_files.is_empty() || changed_mods_file {
-        Some(modified_locale_en_files)
-    } else {
-        None
-    }
-}
-
-fn get_all_modified_and_added_files(event: &PushWebhookEventPayload) -> impl Iterator<Item=&str> {
-    event.commits.iter()
-        .flat_map(|commit| {
-            let added = commit.added.iter();
-            let modified = commit.modified.iter();
-            added.chain(modified).map(Deref::deref)
-        })
+    changed_files.any(|file| {
+        file == GITHUB_MODS_FILE_NAME || file.contains("locale/en/")
+    })
 }
 
 fn get_all_changed_files(event: &PushWebhookEventPayload) -> impl Iterator<Item=&str> {
