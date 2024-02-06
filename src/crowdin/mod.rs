@@ -220,6 +220,11 @@ impl CrowdinDirectory {
         (Self { crowdin_id, crowdin_name, mod_directory }, created)
     }
 
+    pub async fn has_existing(mod_directory: &ModDirectory) -> bool {
+        let crowdin_name = get_crowdin_directory_name(&mod_directory.github_name);
+        find_directory_id(&crowdin_name).await.is_some()
+    }
+
     pub async fn on_repository_added(&self) {
         let english_file_ids = self.add_english_files().await;
         self.add_localization_files(english_file_ids).await;

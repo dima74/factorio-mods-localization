@@ -64,38 +64,28 @@ impl ModDirectory {
         self.root.join("locale/en")
     }
 
-    pub fn check_structure(&self, report_error: bool) -> bool {
-        self.check_for_locale_folder(report_error) && self.check_translation_files_match_english_files(report_error)
+    pub fn check_structure(&self) -> bool {
+        self.check_for_locale_folder() && self.check_translation_files_match_english_files()
     }
 
-    fn check_for_locale_folder(&self, report_error: bool) -> bool {
-        if self.locale_en_path().exists() {
-            true
-        } else {
-            if report_error {
-                let message = format!("[add-repository] [{}] '/locale/en' not found", self.github_name);
-                sentry_report_error(&message);
-            }
-            false
-        }
+    pub fn check_for_locale_folder(&self) -> bool {
+        self.locale_en_path().exists()
     }
 
-    fn check_translation_files_match_english_files(&self, report_error: bool) -> bool {
+    pub fn check_translation_files_match_english_files(&self) -> bool {
         let localizations = self.get_localizations();
         for (language_code, localized_files) in localizations {
             for localized_file in localized_files {
                 let file_name = util::file_name(&localized_file);
                 let english_file = self.locale_en_path().join(file_name);
                 if !english_file.exists() {
-                    if report_error {
-                        let message = format!(
-                            "[add-repository] [{}] matched english file not found for '{}/{}'",
-                            self.github_name,
-                            language_code,
-                            file_name
-                        );
-                        sentry_report_error(&message);
-                    }
+                    let message = format!(
+                        "[add-repository] [{}] matched english file not found for '{}/{}'",
+                        self.github_name,
+                        language_code,
+                        file_name
+                    );
+                    sentry_report_error(&message);
                     return false;
                 }
             }

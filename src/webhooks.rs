@@ -88,7 +88,7 @@ pub async fn on_repository_added(full_name: &str, mods: Vec<GithubModName>, inst
     let repository_directory = github::clone_repository(&full_name, installation_id).await;
     for mod_ in mods {
         let mod_directory = ModDirectory::new(&repository_directory, mod_);
-        if !mod_directory.check_structure(true) { continue; }
+        if !mod_directory.check_structure() { continue; }
 
         let (crowdin_directory, _) = CrowdinDirectory::get_or_create(mod_directory).await;
         crowdin_directory.on_repository_added().await;
@@ -119,7 +119,7 @@ pub async fn on_push_event(
     let mut created = false;
     for mod_ in mods {
         let mod_directory = ModDirectory::new(&repository_directory, mod_);
-        if !mod_directory.check_structure(false) { continue; }
+        if !mod_directory.check_for_locale_folder() { continue; }
         created |= handle_push_event_for_mod(&modified_locale_en_files, mod_directory).await;
     }
     info!("[push-webhook] [{}] success", full_name);
@@ -131,6 +131,11 @@ pub async fn on_push_event(
 }
 
 async fn handle_push_event_for_mod(modified_locale_en_files: &[(&str, &str)], mod_directory: ModDirectory) -> bool {
+    let exists = CrowdinDirectory::has_existing(&mod_directory).await;
+    if !exists && !mod_directory.check_translation_files_match_english_files() {
+        return false;
+    }
+
     let (crowdin_directory, created) = CrowdinDirectory::get_or_create(mod_directory).await;
     if created {
         info!("[push-webhook] [{}] created directory on crowdin - performing full import", crowdin_directory.mod_directory.github_name);
