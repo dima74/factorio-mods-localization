@@ -67,7 +67,7 @@ pub fn remove_empty_ini_files(root: &Path) {
 fn is_empty_ini_file(content: String) -> bool {
     content.lines().all(|line| {
         let line = line.trim();
-        line.is_empty() || line.starts_with('[')
+        line.is_empty() || line.starts_with('[') || line.starts_with(';')
     })
 }
 
