@@ -63,25 +63,19 @@ pub async fn get_installation_id_for_repo(full_name: &str) -> Option<Installatio
         .ok()
 }
 
-pub async fn extract_mods_from_repositories(installation_api: &Octocrab, repositories: Vec<String>) -> Vec<GithubModName> {
-    let mut result = Vec::new();
-    for repository in repositories {
-        let mods = extract_mods_from_repository(installation_api, &repository).await;
-        result.extend(mods);
-    }
-    result
-}
-
 pub async fn extract_mods_from_repository(installation_api: &Octocrab, full_name: &str) -> Vec<GithubModName> {
-    let root_items = get_content(installation_api, full_name, "").await.unwrap();
-    if root_items.items.iter().any(|it| it.name == GITHUB_MODS_FILE_NAME) {
+    let root_items = list_files_in_directory(installation_api, full_name, "").await.unwrap();
+    if root_items.iter().any(|it| it == GITHUB_MODS_FILE_NAME) {
         let mods_file = get_content(installation_api, full_name, GITHUB_MODS_FILE_NAME).await.unwrap();
         let json = mods_file.items[0].decoded_content().unwrap();
         parse_github_mod_names_json(full_name, &json)
     } else {
-        let locale_en_items = get_content(installation_api, full_name, "locale/en").await;
+        if !root_items.iter().any(|it| it == "locale") {
+            return vec![];
+        }
+        let locale_en_items = list_files_in_directory(installation_api, full_name, "locale/en").await;
         match locale_en_items {
-            Ok(locale_en_items) if !locale_en_items.items.is_empty() => {
+            Ok(locale_en_items) if !locale_en_items.is_empty() => {
                 vec![GithubModName::new(full_name, None)]
             }
             _ => vec![],
@@ -103,6 +97,16 @@ async fn get_content(installation_api: &Octocrab, full_name: &str, path: &str) -
         }
     }
     result
+}
+
+pub async fn list_files_in_directory(installation_api: &Octocrab, full_name: &str, path: &str) -> octocrab::Result<Vec<String>> {
+    get_content(installation_api, full_name, path).await
+        .map(|it| {
+            it.items
+                .into_iter()
+                .map(|file| file.name)
+                .collect()
+        })
 }
 
 trait PageExt<T> {
