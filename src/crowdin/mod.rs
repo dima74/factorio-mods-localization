@@ -292,7 +292,10 @@ impl CrowdinDirectory {
     async fn upload_file_to_storage(&self, file: &Path, file_name: &str) -> StorageId {
         info!("[{}] upload file to storage: {}/{}", self.mod_directory.github_name, util::file_name(file.parent().unwrap()), file_name);
         let file_content = fs::read_to_string(file).unwrap();
-        let file_content = util::escape::escape_strings_in_ini_file(&file_content);
+        let mut file_content = util::escape::escape_strings_in_ini_file(&file_content);
+        if file_content.is_empty() {
+            file_content = "; empty".to_owned();
+        }
         upload_file_to_storage(file_content, file_name).await
     }
 }
