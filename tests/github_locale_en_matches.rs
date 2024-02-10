@@ -1,6 +1,7 @@
 use fml::github;
 use fml::mod_directory::ModDirectory;
 
+#[ignore]  // todo if file in locale/en was removed, remove corresponding files in locale/*
 #[tokio::test]
 async fn main() {
     fml::init_with_crowdin().await;
