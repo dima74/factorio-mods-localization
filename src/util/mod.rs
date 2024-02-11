@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::fs;
 use std::fs::File;
 use std::path::{Path, PathBuf};
@@ -8,7 +7,9 @@ use tempfile::TempDir;
 pub mod case;
 pub mod escape;
 
-pub type UnitResult = Result<(), Box<dyn Error>>;
+pub fn is_development() -> bool {
+    dotenv::var("IS_DEVELOPMENT").ok() == Some("true".to_owned())
+}
 
 pub fn read_dir(path: &Path) -> impl Iterator<Item=(PathBuf, String)> {
     fs::read_dir(path).unwrap()

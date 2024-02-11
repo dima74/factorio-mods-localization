@@ -22,7 +22,9 @@ pub static PROJECT_LANGUAGE_CODES: OnceLock<Vec<String>> = OnceLock::new();
 
 pub async fn init() {
     let info = get_project_info().await;
-    assert_eq!(info.name, "Factorio mods localization");
+    if !util::is_development() {
+        assert_eq!(info.name, "Factorio mods localization");
+    }
 
     let codes = info.target_language_ids;
     assert!(codes.len() > 20);
