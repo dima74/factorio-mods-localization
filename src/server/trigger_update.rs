@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 use std::sync::LazyLock;
@@ -148,6 +149,7 @@ async fn push_changes_using_pull_request(path: &Path, full_name: &str, default_b
 }
 
 async fn move_translated_files_to_mod_directory(mod_directory: &ModDirectory, translation_directory: &Path) {
+    delete_unmatched_localization_files(mod_directory);
     for (language_path, language) in util::read_dir(translation_directory) {
         let language_path_crowdin = language_path.join(get_crowdin_directory_name(&mod_directory.github_name));
         assert!(language_path_crowdin.exists());
@@ -165,6 +167,28 @@ async fn move_translated_files_to_mod_directory(mod_directory: &ModDirectory, tr
             let file_renamed = replace_ini_to_cfg(&name);
             let new_path = language_path_repository.join(&file_renamed);
             fs::rename(old_path, new_path).unwrap();
+        }
+    }
+}
+
+/// Consider:
+/// locale/en: ["locale1.cfg"]
+/// locale/ru: ["locale1.cfg", "locale2.cfg"]
+///
+/// Result:
+/// locale/en: ["locale1.cfg"]
+/// locale/ru: ["locale1.cfg"]
+fn delete_unmatched_localization_files(mod_directory: &ModDirectory) {
+    let english_files = mod_directory.get_english_files()
+        .into_iter()
+        .map(|it| util::file_name(&it).to_owned())
+        .collect::<HashSet<_>>();
+    for (_, localized_files) in mod_directory.get_localizations() {
+        for localized_file in localized_files {
+            let name = util::file_name(&localized_file);
+            if !english_files.contains(name) {
+                fs::remove_file(&localized_file).unwrap();
+            }
         }
     }
 }

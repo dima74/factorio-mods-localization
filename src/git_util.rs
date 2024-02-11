@@ -24,7 +24,7 @@ pub fn add_all_and_check_has_changes(path: &Path) -> bool {
 }
 
 fn add_all(path: &Path) {
-    execute_git_command(&path, &["add", "."], true);
+    execute_git_command(&path, &["add", ".", "--all"], true);
 }
 
 pub fn commit(path: &Path) {
