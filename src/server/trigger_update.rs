@@ -137,10 +137,14 @@ async fn push_changes_using_pull_request(path: &Path, full_name: &str, default_b
     if !github::fork_repository(&personal_api, owner, repo).await {
         return;
     }
-    git_util::push_to_my_fork(path, repo);
-    sleep(Duration::from_secs(30)).await;
-    github::create_pull_request(&personal_api, &full_name, &default_branch).await;
-    info!("[update-github-from-crowdin] [{}] pushed to crowdin-fml branch and created PR", full_name);
+    let pushed = git_util::push_to_my_fork(path, repo);
+    if pushed {
+        sleep(Duration::from_secs(30)).await;
+        github::create_pull_request(&personal_api, &full_name, &default_branch).await;
+        info!("[update-github-from-crowdin] [{}] pushed to crowdin-fml branch and created PR", full_name);
+    } else {
+        info!("[update-github-from-crowdin] [{}] existing crowdin-fml branch has same content", full_name);
+    }
 }
 
 async fn move_translated_files_to_mod_directory(mod_directory: &ModDirectory, translation_directory: &Path) {
