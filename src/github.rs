@@ -42,7 +42,8 @@ pub fn as_installation(installation_id: InstallationId) -> Octocrab {
 pub async fn as_installation_for_user(login: &str) -> Octocrab {
     let api = as_app();
     let installation_id = get_all_installations(&api).await
-        .iter().find(|it| it.account.login == login).unwrap()
+        .iter().find(|it| it.account.login == login)
+        .unwrap_or_else(|| panic!("App is not installed for {}", login))
         .id;
     api.installation(installation_id)
 }
