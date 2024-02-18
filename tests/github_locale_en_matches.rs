@@ -1,9 +1,12 @@
 use fml::github;
 use fml::mod_directory::ModDirectory;
 
-#[ignore]  // todo if file in locale/en was removed, remove corresponding files in locale/*
+// Not expected to run daily because of delays - one-week sync delay and delay for merging PR
+#[ignore]
 #[tokio::test]
 async fn main() {
+    // Disable info logging in `github::clone_repository`
+    std::env::set_var("RUST_LOG", "fml=warn");
     fml::init_with_crowdin().await;
 
     let api = github::as_app();
