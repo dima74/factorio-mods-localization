@@ -8,6 +8,8 @@ const IGNORED_GITHUB: &[&str] = &[
     "Sea Block - Sea Block Meta Pack (modded-factorio)",
 ];
 const IGNORED_CROWDIN: &[&str] = &[
+    // Used for testing
+    "Factorio Mod Example (dima74)",
     // github repository deleted or hidden, but mod page still has link to crowdin, so keep for now
     "Factorio Ntech Chemistry (NathaU)",
 ];
