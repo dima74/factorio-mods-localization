@@ -1,7 +1,7 @@
 # Translate your Factorio mod easily with the power of Crowdin
 
 [![Crowdin](https://badges.crowdin.net/factorio-mods-localization/localized.svg)](https://crowdin.com/project/factorio-mods-localization)
-[![Website factorio-mods-localization.herokuapp.com](https://img.shields.io/website-up-down-green-red/https/factorio-mods-localization.herokuapp.com.svg)](https://factorio-mods-localization.herokuapp.com/)
+[![Website factorio-mods-localization.fly.dev](https://img.shields.io/website-up-down-green-red/https/factorio-mods-localization.fly.dev.svg)](https://factorio-mods-localization.fly.dev/)
 [![GitHub Actions Status](https://img.shields.io/github/actions/workflow/status/dima74/factorio-mods-localization/check.yml)](https://github.com/dima74/factorio-mods-localization/actions/workflows/check.yml)
 [![GitHub license](https://img.shields.io/github/license/dima74/factorio-mods-localization.svg)](https://github.com/dima74/factorio-mods-localization/blob/master/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/dima74/factorio-mods-localization.svg)](https://GitHub.com/dima74/factorio-mods-localization/issues/)

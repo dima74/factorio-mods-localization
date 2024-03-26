@@ -1,3 +1,4 @@
 [release]
 address = "0.0.0.0"
 cli_colors = false
+port = 8080

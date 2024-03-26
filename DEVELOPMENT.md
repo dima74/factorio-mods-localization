@@ -7,14 +7,27 @@
 * `/importEnglish?secret=X&repo=REPO` - Overwrites english files on Crowdin based on GitHub
 
 
-## Heroku configuration
+## fly.io configuration
+* First time
+```sh
+yay -S flyctl-bin
+fly secrets set KEY=VALUE
+fly launch
 ```
-yay -S heroku-cli
-heroku login
-heroku git:remote -a factorio-mods-localization
-# Note that specifying buildpack in app.json doesn't work
-heroku buildpacks:set emk/rust
-git push heroku
+
+* Deploy from local
+```sh
+fly deploy --image-label $(git rev-parse HEAD)
+```
+
+* Deploy from github
+  https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
+  See .github/workflows/fly.yml
+  `FLY_API_TOKEN` - get using `fly tokens create deploy -x 999999h` 
+
+* Get git commit hash for current release
+```sh
+fly image show  # column TAG
 ```
 
 
