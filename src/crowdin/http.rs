@@ -1,16 +1,13 @@
 use std::ops::Deref;
-use std::sync::LazyLock;
 
 use reqwest::{Method, RequestBuilder};
 use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
 
 use crate::crowdin::StorageId;
+use crate::myenv::{CROWDIN_API_KEY, CROWDIN_PROJECT_ID};
 
 const BASE_URL: &str = "https://api.crowdin.com/api/v2";
-
-static PROJECT_ID: LazyLock<String> = LazyLock::new(|| dotenv::var("CROWDIN_PROJECT_ID").unwrap());
-static API_KEY: LazyLock<String> = LazyLock::new(|| dotenv::var("CROWDIN_API_KEY").unwrap());
 
 #[derive(Deserialize)]
 pub struct DataWrapper<T> { pub data: T }
@@ -26,10 +23,10 @@ async fn send_request<T: DeserializeOwned>(
     http_method: Method,
     before_send: impl FnOnce(RequestBuilder) -> RequestBuilder
 ) -> T {
-    let url = format!("{}/projects/{}{}", BASE_URL, PROJECT_ID.deref(), crowdin_path);
+    let url = format!("{}/projects/{}{}", BASE_URL, CROWDIN_PROJECT_ID.deref(), crowdin_path);
     let request = reqwest::Client::new()
         .request(http_method, &url)
-        .bearer_auth(API_KEY.deref());
+        .bearer_auth(CROWDIN_API_KEY.deref());
     let request = before_send(request);
 
     let response = request.send().await.unwrap();
@@ -92,7 +89,7 @@ pub async fn upload_file_to_storage(file_content: String, file_name: &str) -> St
         .post(&url)
         .body(file_content)
         .header("Crowdin-API-FileName", file_name)
-        .bearer_auth(API_KEY.deref())
+        .bearer_auth(CROWDIN_API_KEY.deref())
         .send().await.unwrap()
         .json::<DataWrapper<IdResponse>>().await.unwrap()
         .data.id

@@ -1,9 +1,11 @@
+use std::ops::Deref;
 use std::path::Path;
 use std::process::{Command, Output};
 
 use log::{error, warn};
 
 use crate::github::{GITHUB_BRANCH_NAME, GITHUB_USER_NAME};
+use crate::myenv::{GIT_COMMIT_MESSAGE, GIT_COMMIT_USER_EMAIL, GIT_COMMIT_USER_NAME, GITHUB_PERSONAL_ACCESS_TOKEN};
 
 pub fn clone(url: &str, path: &Path) {
     execute_git_command(
@@ -28,9 +30,9 @@ fn add_all(path: &Path) {
 }
 
 pub fn commit(path: &Path) {
-    let name = dotenv::var("GIT_COMMIT_USER_NAME").unwrap();
-    let email = dotenv::var("GIT_COMMIT_USER_EMAIL").unwrap();
-    let message = dotenv::var("GIT_COMMIT_MESSAGE").unwrap();
+    let name = GIT_COMMIT_USER_NAME.deref();
+    let email = GIT_COMMIT_USER_EMAIL.deref();
+    let message = GIT_COMMIT_MESSAGE.deref();
     let args = &[
         "-c", &format!("user.name='{}'", name),
         "-c", &format!("user.email='{}'", email),
@@ -46,7 +48,7 @@ pub fn push(path: &Path) {
 }
 
 pub fn push_to_my_fork(path: &Path, repo: &str) -> bool {
-    let personal_token = dotenv::var("GITHUB_PERSONAL_ACCESS_TOKEN").unwrap();
+    let personal_token = GITHUB_PERSONAL_ACCESS_TOKEN.deref();
     let url = format!("https://x-access-token:{}@github.com/{}/{}.git", personal_token, GITHUB_USER_NAME, repo);
     execute_git_command(&path, &["remote", "add", "my", &url], true);
 

@@ -14,6 +14,7 @@ use tempfile::TempDir;
 use crate::crowdin::http::{crowdin_get_empty_query, crowdin_get_pagination, crowdin_get_pagination_empty_query, crowdin_post, crowdin_put, DataWrapper, IdResponse, UnitResponse, upload_file_to_storage};
 use crate::github_mod_name::GithubModName;
 use crate::mod_directory::{LanguageCode, ModDirectory};
+use crate::myenv::is_development;
 use crate::util;
 
 pub mod http;
@@ -22,7 +23,7 @@ pub static PROJECT_LANGUAGE_CODES: OnceLock<Vec<String>> = OnceLock::new();
 
 pub async fn init() {
     let info = get_project_info().await;
-    if !util::is_development() {
+    if !is_development() {
         assert_eq!(info.name, "Factorio mods localization");
     }
 

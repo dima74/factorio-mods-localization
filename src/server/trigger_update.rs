@@ -15,6 +15,7 @@ use crate::crowdin::{get_crowdin_directory_name, normalize_language_code, replac
 use crate::github::{as_personal_account, extract_mods_from_repository};
 use crate::github_mod_name::GithubModName;
 use crate::mod_directory::ModDirectory;
+use crate::server::check_secret;
 
 #[get("/triggerUpdate?<repo>&<subpath>&<secret>")]
 pub async fn trigger_update(
@@ -22,9 +23,7 @@ pub async fn trigger_update(
     subpath: Option<String>,
     secret: Option<String>,
 ) -> &'static str {
-    if secret != Some(dotenv::var("WEBSERVER_SECRET").unwrap()) {
-        return "Missing secret";
-    }
+    if !check_secret(secret) { return "Missing secret"; }
     match repo {
         Some(repo) => {
             trigger_update_single_repository_part1(repo, subpath).await

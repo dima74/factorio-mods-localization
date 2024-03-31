@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::ops::Deref;
 
 use hmac::{Hmac, Mac};
 use octocrab::models::webhook_events::WebhookEvent;
@@ -6,6 +7,8 @@ use rocket::{Data, Request};
 use rocket::data::{FromData, Outcome, ToByteUnit};
 use rocket::http::Status;
 use sha2::Sha256;
+
+use crate::myenv::GITHUB_APP_WEBHOOKS_SECRET;
 
 pub struct GithubEvent(pub WebhookEvent);
 
@@ -53,7 +56,7 @@ impl GithubEvent {
 }
 
 fn verify_signature(signature: &[u8], content: &[u8]) -> Result<(), impl Error> {
-    let secret = dotenv::var("GITHUB_APP_WEBHOOKS_SECRET").unwrap();
+    let secret = GITHUB_APP_WEBHOOKS_SECRET.deref();
     let mut mac = Hmac::<Sha256>::new_from_slice(secret.as_bytes())
         .expect("HMAC can take key of any size");
     mac.update(&content);

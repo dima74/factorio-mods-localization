@@ -1,7 +1,10 @@
+use std::ops::Deref;
+
 use log::info;
 use rocket::{get, post, routes};
 use rocket::response::content::RawHtml;
 
+use crate::myenv::WEBSERVER_SECRET;
 use crate::server::webhook_util::GithubEvent;
 use crate::webhooks;
 
@@ -25,6 +28,10 @@ fn webhook(event: GithubEvent) {
 #[get("/version")]
 fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
+}
+
+fn check_secret(secret: Option<String>) -> bool {
+    secret.as_ref() == Some(WEBSERVER_SECRET.deref())
 }
 
 pub async fn main() {

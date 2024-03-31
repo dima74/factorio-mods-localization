@@ -1,5 +1,6 @@
 use rocket::get;
 
+use crate::server::check_secret;
 use crate::server::trigger_update::{get_installation_id_and_mods, get_trigger_update_mutex};
 use crate::webhooks;
 
@@ -10,9 +11,7 @@ pub async fn import_repository(
     subpath: Option<String>,
     secret: Option<String>,
 ) -> &'static str {
-    if secret != Some(dotenv::var("WEBSERVER_SECRET").unwrap()) {
-        return "Missing secret";
-    }
+    if !check_secret(secret) { return "Missing secret"; }
     let _lock = get_trigger_update_mutex().await;
     let (installation_id, mods) = match get_installation_id_and_mods(&repo, subpath).await {
         Ok(value) => value,
@@ -29,9 +28,7 @@ pub async fn import_english(
     subpath: Option<String>,
     secret: Option<String>,
 ) -> &'static str {
-    if secret != Some(dotenv::var("WEBSERVER_SECRET").unwrap()) {
-        return "Missing secret";
-    }
+    if !check_secret(secret) { return "Missing secret"; }
     let _lock = get_trigger_update_mutex().await;
     let (installation_id, mods) = match get_installation_id_and_mods(&repo, subpath).await {
         Ok(value) => value,

@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use std::path::Path;
 use std::time::Duration;
 
@@ -14,6 +15,7 @@ use tokio::time::sleep;
 use crate::git_util;
 use crate::github_mod_name::{GithubModName, parse_github_mod_names_json};
 use crate::mod_directory::RepositoryDirectory;
+use crate::myenv::{GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, GITHUB_PERSONAL_ACCESS_TOKEN};
 use crate::sentry::sentry_report_error;
 use crate::util::EmptyBody;
 
@@ -23,8 +25,8 @@ pub const GITHUB_MODS_FILE_NAME: &str = "factorio-mods-localization.json";
 const MAX_PER_PAGE: u8 = 100;
 
 fn get_credentials() -> (AppId, EncodingKey) {
-    let github_app_id: u64 = dotenv::var("GITHUB_APP_ID").unwrap().parse().unwrap();
-    let github_app_key = dotenv::var("GITHUB_APP_PRIVATE_KEY").unwrap().replace("\\n", "\n");
+    let github_app_id: u64 = GITHUB_APP_ID.deref().parse().unwrap();
+    let github_app_key = GITHUB_APP_PRIVATE_KEY.deref().replace("\\n", "\n");
     let github_app_key = EncodingKey::from_rsa_pem(github_app_key.as_bytes()).unwrap();
     (AppId(github_app_id), github_app_key)
 }
@@ -221,7 +223,7 @@ pub async fn is_branch_protected(installation_api: &Octocrab, full_name: &str, b
 }
 
 pub fn as_personal_account() -> Octocrab {
-    let personal_token = dotenv::var("GITHUB_PERSONAL_ACCESS_TOKEN").unwrap();
+    let personal_token = GITHUB_PERSONAL_ACCESS_TOKEN.to_owned();
     Octocrab::builder()
         .personal_token(personal_token)
         .build()

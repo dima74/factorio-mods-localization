@@ -2,7 +2,7 @@ use log::error;
 use sentry::Level;
 use sentry_log::LogFilter;
 
-use crate::util::is_development;
+use crate::myenv::is_development;
 
 // https://docs.sentry.io/platforms/rust/
 pub fn init_sentry() -> Option<sentry::ClientInitGuard> {

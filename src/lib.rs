@@ -9,6 +9,7 @@ pub mod crowdin;
 pub mod git_util;
 pub mod github;
 pub mod mod_directory;
+pub mod myenv;
 pub mod sentry;
 pub mod server;
 pub mod util;
@@ -17,6 +18,7 @@ pub mod github_mod_name;
 
 pub fn init() {
     dotenv::dotenv().ok();
+    myenv::init();
     sentry::init_logging();
 }
 
