@@ -11,6 +11,7 @@ use crate::webhooks;
 mod debug_routes;
 mod example_error_routes;
 mod trigger_update;
+mod trigger_update_public;
 pub mod webhook_util;
 
 #[get("/")]
@@ -40,6 +41,8 @@ pub async fn main() {
         index,
         webhook,
         trigger_update::trigger_update,
+        trigger_update_public::trigger_update,
+        trigger_update_public::trigger_update2,
         version,
         debug_routes::import_repository,
         debug_routes::import_english,

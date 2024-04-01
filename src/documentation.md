@@ -48,6 +48,16 @@ If push to master is not allowed:
         * no: crowdin-api/add-file
 1. (Note that for now we will not handle file removing) 
 
+## Public API to trigger update with GitHub OAuth authorization
+* Request `/api/triggerUpdate/<repo>/<owner>`
+* Redirect to GitHub OAuth
+  https://github.com/login/oauth/authorize
+  https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps#web-application-flow
+* Redirect to `/api/triggerUpdate2`
+* Obtain access token using https://github.com/login/oauth/access_token
+* Get authorized user using https://api.github.com/user
+* Compare with <owner>, if matches trigger update
+
 ## Notes
 * Any localization folder (such as `/locale/en`, `/locale/ru`) may contain subfolder, and we should ignore subfolders, because factorio ignores them too. Here is [example](https://github.com/Karosieben/boblocale/tree/master/locale/en/old).
 

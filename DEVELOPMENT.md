@@ -3,6 +3,7 @@
 * `/webhook` - Github app webhooks handler
 * `/triggerUpdate?secret=X` - Update all repositories
 * `/triggerUpdate?secret=X&repo=REPO` - Update specific repository
+* `/api/triggerUpdate?repo=REPO` - Public API for updating specific repository with GitHub OAuth
 * `/importRepository?secret=X&repo=REPO` - Readd repository to Crowdin (both english files and translations)
 * `/importEnglish?secret=X&repo=REPO` - Overwrites english files on Crowdin based on GitHub
 
@@ -32,17 +33,21 @@ fly image show  # column TAG
 
 
 ## Needed environment variables
+From https://crowdin.com/project/factorio-mods-localization/tools/api:
+* `CROWDIN_PROJECT_ID`
+* `CROWDIN_API_KEY`
+
 From https://github.com/settings/apps/factorio-mods-localization-helper:
 * `GITHUB_APP_ID` - App ID
 * `GITHUB_APP_PRIVATE_KEY` - Private keys (convert pem file content to one line by replacing newlines with \n)
 * `GITHUB_APP_WEBHOOKS_SECRET` - Webhook secret
 
-From https://crowdin.com/project/factorio-mods-localization/tools/api:
-* `CROWDIN_PROJECT_ID`
-* `CROWDIN_API_KEY`
-
 From https://github.com/settings/tokens for https://github.com/factorio-mods-helper:
 * `GITHUB_PERSONAL_ACCESS_TOKEN` - classic token with `repo:public_repo` scope
+
+From https://github.com/settings/developers:
+* `GITHUB_OAUTH_CLIENT_ID`
+* `GITHUB_OAUTH_CLIENT_SECRET`
 
 From https://diralik.sentry.io/settings/projects/factorio-mods-localization/keys/
 * SENTRY_DSN - `https://...@....ingest.sentry.io/...`

@@ -46,4 +46,5 @@ serde_json = "1.0.108"
 sha2 = "0.10.8"
 tempfile = "3.8.1"
 tokio = { version = "1.33.0" }
+url = "2.5.0"
 zip = { version = "0.6.0", default-features = false, features = ["deflate"] }

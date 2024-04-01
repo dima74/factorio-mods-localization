@@ -293,6 +293,13 @@ pub async fn get_not_starred_repositories() -> Vec<String> {
     not_starred
 }
 
+pub async fn get_current_user(api_oauth: &Octocrab) -> String {
+    let response: octocrab::models::Author = api_oauth
+        .get("/user", None::<&()>)
+        .await.unwrap();
+    response.login
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

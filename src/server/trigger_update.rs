@@ -27,6 +27,7 @@ pub async fn trigger_update(
     match repo {
         Some(repo) => {
             trigger_update_single_repository_part1(repo, subpath).await
+                .unwrap_or_else(|it| it)
         }
         None => {
             let task = trigger_update_all_repositories();
@@ -45,16 +46,19 @@ pub async fn get_trigger_update_mutex() -> impl Drop {
     MUTEX.lock().await
 }
 
-async fn trigger_update_single_repository_part1(full_name: String, subpath: Option<String>) -> &'static str {
+pub async fn trigger_update_single_repository_part1(
+    full_name: String,
+    subpath: Option<String>,
+) -> Result<&'static str, &'static str> {
     info!("\n[update-github-from-crowdin] [{}] starting...", full_name);
     let (installation_id, mods) = match get_installation_id_and_mods(&full_name, subpath).await {
         Ok(value) => value,
-        Err(message) => return message,
+        Err(message) => return Err(message),
     };
     let repositories = vec![(full_name.to_owned(), mods, installation_id)];
     let task = trigger_update_single_repository_part2(repositories, full_name);
     tokio::spawn(task);
-    "Triggered. See logs for details."
+    Ok("Triggered. See logs for details.")
 }
 
 async fn trigger_update_single_repository_part2(
