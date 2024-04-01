@@ -37,7 +37,7 @@ pub fn get_mods_impl(full_name: &str, root: &Path) -> Vec<GithubModName> {
         parse_github_mod_names_json(full_name, &json)
     } else {
         // Usual case - single mod at root of the github repository
-        vec![GithubModName::new(full_name, None)]
+        vec![GithubModName::new(full_name, None, None)]
     }
 }
 

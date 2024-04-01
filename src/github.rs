@@ -79,7 +79,7 @@ pub async fn extract_mods_from_repository(installation_api: &Octocrab, full_name
         let locale_en_items = list_files_in_directory(installation_api, full_name, "locale/en").await;
         match locale_en_items {
             Ok(locale_en_items) if !locale_en_items.is_empty() => {
-                vec![GithubModName::new(full_name, None)]
+                vec![GithubModName::new(full_name, None, None)]
             }
             _ => vec![],
         }
@@ -309,13 +309,13 @@ mod tests {
         let api = as_installation_for_user("dima74").await;
         assert_eq!(
             extract_mods_from_repository(&api, "dima74/factorio-mod-example").await,
-            vec![GithubModName::new("dima74/factorio-mod-example", None)],
+            vec![GithubModName::new("dima74/factorio-mod-example", None, None)],
         );
         assert_eq!(
             extract_mods_from_repository(&api, "dima74/factorio-multimod-example").await,
             vec![
-                GithubModName::new("dima74/factorio-multimod-example", Some("Mod1".to_owned())),
-                GithubModName::new("dima74/factorio-multimod-example", Some("Mod2".to_owned())),
+                GithubModName::new("dima74/factorio-multimod-example", Some("Mod1".to_owned()), None),
+                GithubModName::new("dima74/factorio-multimod-example", Some("Mod2".to_owned()), None),
             ],
         );
         assert_eq!(

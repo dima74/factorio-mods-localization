@@ -80,7 +80,7 @@ pub async fn get_installation_id_and_mods(
     };
 
     let mods = if subpath.is_some() {
-        vec![GithubModName::new(&repo, subpath)]
+        vec![GithubModName::new(&repo, subpath, None)]
     } else {
         let api = github::as_installation(installation_id);
         extract_mods_from_repository(&api, &repo).await
@@ -96,8 +96,24 @@ async fn trigger_update_all_repositories() {
     info!("\n[update-github-from-crowdin] [*] starting...");
     let mut api = github::as_app();
     let repositories = github::get_all_repositories(&mut api).await;
+    let repositories = filter_repositories_for_update_all(repositories);
     push_crowdin_changes_to_repositories(repositories).await;
     info!("[update-github-from-crowdin] [*] success");
+}
+
+fn filter_repositories_for_update_all(
+    repositories: Vec<(String, Vec<GithubModName>, InstallationId)>
+) -> Vec<(String, Vec<GithubModName>, InstallationId)> {
+    repositories
+        .into_iter()
+        .filter(|(full_name, mods, _)| {
+            let weekly_update_from_crowdin = mods.iter().all(|it| it.weekly_update_from_crowdin);
+            if !weekly_update_from_crowdin {
+                info!("[update-github-from-crowdin] [{}] skipping update because weekly_update_from_crowdin=false", full_name);
+            }
+            weekly_update_from_crowdin
+        })
+        .collect()
 }
 
 async fn push_crowdin_changes_to_repositories(repositories: Vec<(String, Vec<GithubModName>, InstallationId)>) {

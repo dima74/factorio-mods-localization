@@ -14,7 +14,7 @@ We provide service for simplifying [Factorio](https://www.factorio.com/) mods tr
 * Every week our [FactorioBot](https://github.com/factorio-mods-helper) will fetch translation updates from Crowdin and commit them to your repository
 
 ## Motivation
-There are a lot of Factorio mods hosted on GitHub. Most of them are translated using pull requests. I think it is not very convenient (because it is unclear which strings are untranslated yet and translators have to know how to use git). So, I created a helper tool for configuring the translation process on Crowdin, a powerful localization platform.
+There are a lot of Factorio mods hosted on GitHub. Most of them are translated using pull requests. It is not very convenient (because it is unclear which strings are untranslated yet and translators have to know how to use git). So, I created a helper tool for configuring the translation process on Crowdin, a powerful localization platform.
 
 ## Installation
 1. Go to our [GitHub app page][1]
@@ -40,17 +40,27 @@ Then Crowdin translation interface will be opened where you can translate string
 ## Notes
 
 * To correctly upload your existing translations to Crowdin, files in any localization folder (such as `/locale/de`) **must have the same names as files in `/locale/en` folder**.
-* If a repository has branch protection rules, then our helper will create a pull request (instead of pushing to the main branch directly).
+* If a repository has branch protection rules, our helper will create a pull request (instead of pushing to the main branch directly).
 * Please ask any questions or report bugs by creating a new [issue](https://github.com/dima74/factorio-mods-localization/issues).
 
 ## Multimods
-It is possible to have multiple Factorio mods in a single GitHub repository. In this case please add file `factorio-mods-localization.json` with the list of mods to the root of the repository. See [`Omnimods/Omnimods` repository](https://github.com/Omnimods/Omnimods/commit/1e689afcf202776ffa0f675f73353f1fd67d2039) as an example.
+It is possible to have multiple Factorio mods in a single GitHub repository. In this case please add file `factorio-mods-localization.json` with the list of mods to the root of the repository:
 ```
-├── factorio-mods-localization.json  // ["Mod1", "Mod2"]
+├── factorio-mods-localization.json  // {"mods": ["Mod1", "Mod2"]}
 ├── Mod1
 │   ├── locale/en
 ├── Mod2
 │   ├── locale/en
+```
+
+## Disable weekly updates from Crowdin
+It is possible to disable automatic weekly updates from Crowdin and perform updates manually when you need it. To do so, create file `factorio-mods-localization.json` in the root of your repository with content:
+```json
+{"weekly_update_from_crowdin": false}
+```
+Now you can perform an update manually using the following URL:
+```
+https://factorio-mods-localization.fly.dev/api/triggerUpdate?repo=OWNER/REPO
 ```
 
 ## Detailed description of how it works
