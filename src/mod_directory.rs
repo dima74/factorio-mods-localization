@@ -1,11 +1,11 @@
 use std::path::{Path, PathBuf};
-use log::error;
 
+use log::error;
 use tempfile::TempDir;
 
 use crate::{crowdin, util};
 use crate::github::GITHUB_MODS_FILE_NAME;
-use crate::github_mod_name::{GithubModName, parse_github_mod_names_json};
+use crate::github_repo_info::{GithubModName, parse_github_repo_info_json};
 use crate::sentry::sentry_report_error;
 
 pub type LanguageCode = String;
@@ -34,7 +34,8 @@ pub fn get_mods_impl(full_name: &str, root: &Path) -> Vec<GithubModName> {
     let mods_file = root.join(GITHUB_MODS_FILE_NAME);
     if mods_file.exists() {
         let json = std::fs::read_to_string(mods_file).unwrap();
-        parse_github_mod_names_json(full_name, &json)
+        parse_github_repo_info_json(full_name, &json)
+            .map_or(vec![], |it| it.mods)
     } else {
         // Usual case - single mod at root of the github repository
         vec![GithubModName::new(full_name, None, None)]

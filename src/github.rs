@@ -13,7 +13,7 @@ use serde::de::DeserializeOwned;
 use tokio::time::sleep;
 
 use crate::git_util;
-use crate::github_mod_name::{GithubModName, parse_github_mod_names_json};
+use crate::github_repo_info::{GithubRepoInfo, parse_github_repo_info_json};
 use crate::mod_directory::RepositoryDirectory;
 use crate::myenv::{GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, GITHUB_PERSONAL_ACCESS_TOKEN};
 use crate::sentry::sentry_report_error;
@@ -66,22 +66,22 @@ pub async fn get_installation_id_for_repo(full_name: &str) -> Option<Installatio
         .ok()
 }
 
-pub async fn extract_mods_from_repository(installation_api: &Octocrab, full_name: &str) -> Vec<GithubModName> {
+pub async fn get_repo_info(installation_api: &Octocrab, full_name: &str) -> Option<GithubRepoInfo> {
     let root_items = list_files_in_directory(installation_api, full_name, "").await.unwrap();
     if root_items.iter().any(|it| it == GITHUB_MODS_FILE_NAME) {
         let mods_file = get_content(installation_api, full_name, GITHUB_MODS_FILE_NAME).await.unwrap();
         let json = mods_file.items[0].decoded_content().unwrap();
-        parse_github_mod_names_json(full_name, &json)
+        parse_github_repo_info_json(full_name, &json)
     } else {
         if !root_items.iter().any(|it| it == "locale") {
-            return vec![];
+            return None;
         }
         let locale_en_items = list_files_in_directory(installation_api, full_name, "locale/en").await;
         match locale_en_items {
             Ok(locale_en_items) if !locale_en_items.is_empty() => {
-                vec![GithubModName::new(full_name, None, None)]
+                Some(GithubRepoInfo::new_single_mod(full_name))
             }
-            _ => vec![],
+            _ => None,
         }
     }
 }
@@ -129,16 +129,16 @@ pub async fn get_all_installations(api: &Octocrab) -> Vec<Installation> {
         .all_pages(api).await.unwrap()
 }
 
-pub async fn get_all_repositories(api: &Octocrab) -> Vec<(String, Vec<GithubModName>, InstallationId)> {
+pub async fn get_all_repositories(api: &Octocrab) -> Vec<(String, GithubRepoInfo, InstallationId)> {
     let mut result = Vec::new();
     let installations = get_all_installations(api).await;
     for installation in installations {
         let installation_api = api.installation(installation.id);
         let repositories = get_all_repositories_of_installation(&installation_api).await;
         for repository in repositories {
-            let mods = extract_mods_from_repository(&installation_api, &repository).await;
-            if !mods.is_empty() {
-                result.push((repository, mods, installation.id));
+            let repo_info = get_repo_info(&installation_api, &repository).await;
+            if let Some(repo_info) = repo_info {
+                result.push((repository, repo_info, installation.id));
             }
         }
     }
@@ -285,7 +285,7 @@ pub async fn get_not_starred_repositories() -> Vec<String> {
 
     let api_personal = as_personal_account();
     let mut not_starred = Vec::new();
-    for (full_name, _mods, _id) in repositories {
+    for (full_name, _repo_info, _id) in repositories {
         if !is_repository_starred(&api_personal, &full_name).await {
             not_starred.push(full_name);
         }
@@ -302,25 +302,31 @@ pub async fn get_current_user(api_oauth: &Octocrab) -> String {
 
 #[cfg(test)]
 mod tests {
+    use crate::github_repo_info::GithubModName;
+
     use super::*;
 
     #[tokio::test]
     async fn test_has_locale_en() {
         let api = as_installation_for_user("dima74").await;
         assert_eq!(
-            extract_mods_from_repository(&api, "dima74/factorio-mod-example").await,
-            vec![GithubModName::new("dima74/factorio-mod-example", None, None)],
+            get_repo_info(&api, "dima74/factorio-mod-example").await,
+            Some(GithubRepoInfo {
+                mods: vec![GithubModName::new("dima74/factorio-mod-example", None, None)],
+            }),
         );
         assert_eq!(
-            extract_mods_from_repository(&api, "dima74/factorio-multimod-example").await,
-            vec![
-                GithubModName::new("dima74/factorio-multimod-example", Some("Mod1".to_owned()), None),
-                GithubModName::new("dima74/factorio-multimod-example", Some("Mod2".to_owned()), None),
-            ],
+            get_repo_info(&api, "dima74/factorio-multimod-example").await,
+            Some(GithubRepoInfo {
+                mods: vec![
+                    GithubModName::new("dima74/factorio-multimod-example", Some("Mod1".to_owned()), None),
+                    GithubModName::new("dima74/factorio-multimod-example", Some("Mod2".to_owned()), None),
+                ],
+            }),
         );
         assert_eq!(
-            extract_mods_from_repository(&api, "dima74/factorio-mods-localization").await,
-            vec![],
+            get_repo_info(&api, "dima74/factorio-mods-localization").await,
+            None,
         );
     }
 }

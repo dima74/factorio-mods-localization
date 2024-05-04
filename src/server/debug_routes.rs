@@ -1,7 +1,7 @@
 use rocket::get;
 
 use crate::server::check_secret;
-use crate::server::trigger_update::{get_installation_id_and_mods, get_trigger_update_mutex};
+use crate::server::trigger_update::{get_installation_id_and_repo_info, get_trigger_update_mutex};
 use crate::webhooks;
 
 /// For cases when repository was not imported correctly for some reason and manual intervention is needed
@@ -13,11 +13,11 @@ pub async fn import_repository(
 ) -> &'static str {
     if !check_secret(secret) { return "Missing secret"; }
     let _lock = get_trigger_update_mutex().await;
-    let (installation_id, mods) = match get_installation_id_and_mods(&repo, subpath).await {
+    let (installation_id, repo_info) = match get_installation_id_and_repo_info(&repo, subpath).await {
         Ok(value) => value,
         Err(value) => return value,
     };
-    webhooks::on_repository_added(&repo, mods, installation_id).await;
+    webhooks::on_repository_added(&repo, repo_info, installation_id).await;
     "Ok."
 }
 
@@ -30,10 +30,10 @@ pub async fn import_english(
 ) -> &'static str {
     if !check_secret(secret) { return "Missing secret"; }
     let _lock = get_trigger_update_mutex().await;
-    let (installation_id, mods) = match get_installation_id_and_mods(&repo, subpath).await {
+    let (installation_id, repo_info) = match get_installation_id_and_repo_info(&repo, subpath).await {
         Ok(value) => value,
         Err(value) => return value,
     };
-    webhooks::import_english(&repo, mods, installation_id).await;
+    webhooks::import_english(&repo, repo_info, installation_id).await;
     "Ok."
 }

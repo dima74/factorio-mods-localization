@@ -14,7 +14,7 @@ pub mod sentry;
 pub mod server;
 pub mod util;
 pub mod webhooks;
-pub mod github_mod_name;
+pub mod github_repo_info;
 
 pub fn init() {
     dotenv::dotenv().ok();

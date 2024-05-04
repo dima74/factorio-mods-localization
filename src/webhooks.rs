@@ -10,7 +10,7 @@ use WebhookEventPayload::{Installation, InstallationRepositories, Push};
 use crate::crowdin::CrowdinDirectory;
 use crate::github;
 use crate::github::GITHUB_MODS_FILE_NAME;
-use crate::github_mod_name::GithubModName;
+use crate::github_repo_info::GithubRepoInfo;
 use crate::mod_directory::ModDirectory;
 
 pub async fn webhook_impl(event: WebhookEvent) {
@@ -74,19 +74,20 @@ async fn on_repositories_added(repositories: Vec<InstallationEventRepository>, i
         .collect::<Vec<_>>();
     let api = github::as_installation(installation_id);
     for repository in repositories {
-        let mods = github::extract_mods_from_repository(&api, &repository).await;
-        if mods.is_empty() { continue; }
-        on_repository_added(&repository, mods, installation_id).await;
+        let Some(repo_info) = github::get_repo_info(&api, &repository).await else {
+            continue;
+        };
+        on_repository_added(&repository, repo_info, installation_id).await;
 
         let api_personal = github::as_personal_account();
         github::star_repository(&api_personal, &repository).await;
     }
 }
 
-pub async fn on_repository_added(full_name: &str, mods: Vec<GithubModName>, installation_id: InstallationId) {
+pub async fn on_repository_added(full_name: &str, repo_info: GithubRepoInfo, installation_id: InstallationId) {
     info!("[email] app installed for repository {}", full_name);
     let repository_directory = github::clone_repository(&full_name, installation_id).await;
-    for mod_ in mods {
+    for mod_ in repo_info.mods {
         let mod_directory = ModDirectory::new(&repository_directory, mod_);
         if !mod_directory.check_structure() { continue; }
 
@@ -96,9 +97,9 @@ pub async fn on_repository_added(full_name: &str, mods: Vec<GithubModName>, inst
     info!("[add-repository] [{}] success", full_name);
 }
 
-pub async fn import_english(full_name: &str, mods: Vec<GithubModName>, installation_id: InstallationId) {
+pub async fn import_english(full_name: &str, repo_info: GithubRepoInfo, installation_id: InstallationId) {
     let repository_directory = github::clone_repository(&full_name, installation_id).await;
-    for mod_ in mods {
+    for mod_ in repo_info.mods {
         let mod_directory = ModDirectory::new(&repository_directory, mod_);
         if !mod_directory.check_for_locale_folder() { continue; }
 

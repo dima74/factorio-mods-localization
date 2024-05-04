@@ -28,7 +28,7 @@ async fn main() {
     let api = github::as_app();
     let github_names = github::get_all_repositories(&api).await
         .into_iter()
-        .flat_map(|(_full_name, mods, _id)| mods)
+        .flat_map(|(_full_name, repo_info, _id)| repo_info.mods)
         .map(|it| get_crowdin_directory_name(&it))
         .filter(|name| !IGNORED_GITHUB.contains(&name.as_str()))
         .collect::<HashSet<String>>();

@@ -12,8 +12,8 @@ use tokio::time::sleep;
 
 use crate::{crowdin, git_util, github, util};
 use crate::crowdin::{get_crowdin_directory_name, normalize_language_code, replace_ini_to_cfg};
-use crate::github::{as_personal_account, extract_mods_from_repository};
-use crate::github_mod_name::GithubModName;
+use crate::github::{as_personal_account, get_repo_info};
+use crate::github_repo_info::GithubRepoInfo;
 use crate::mod_directory::ModDirectory;
 use crate::server::check_secret;
 
@@ -51,18 +51,18 @@ pub async fn trigger_update_single_repository_part1(
     subpath: Option<String>,
 ) -> Result<&'static str, &'static str> {
     info!("\n[update-github-from-crowdin] [{}] starting...", full_name);
-    let (installation_id, mods) = match get_installation_id_and_mods(&full_name, subpath).await {
+    let (installation_id, repo_info) = match get_installation_id_and_repo_info(&full_name, subpath).await {
         Ok(value) => value,
         Err(message) => return Err(message),
     };
-    let repositories = vec![(full_name.to_owned(), mods, installation_id)];
+    let repositories = vec![(full_name.to_owned(), repo_info, installation_id)];
     let task = trigger_update_single_repository_part2(repositories, full_name);
     tokio::spawn(task);
     Ok("Triggered. See logs for details.")
 }
 
 async fn trigger_update_single_repository_part2(
-    repositories: Vec<(String, Vec<GithubModName>, InstallationId)>,
+    repositories: Vec<(String, GithubRepoInfo, InstallationId)>,
     full_name: String,
 ) {
     let _lock = get_trigger_update_mutex().await;
@@ -70,25 +70,25 @@ async fn trigger_update_single_repository_part2(
     info!("[update-github-from-crowdin] [{}] success", full_name);
 }
 
-pub async fn get_installation_id_and_mods(
+pub async fn get_installation_id_and_repo_info(
     repo: &str,
     subpath: Option<String>,
-) -> Result<(InstallationId, Vec<GithubModName>), &'static str> {
+) -> Result<(InstallationId, GithubRepoInfo), &'static str> {
     let installation_id = match github::get_installation_id_for_repo(&repo).await {
         Some(id) => id,
         None => return Err("Can't find installation for repository"),
     };
 
-    let mods = if subpath.is_some() {
-        vec![GithubModName::new(&repo, subpath, None)]
+    let repo_info = if let Some(subpath) = subpath {
+        GithubRepoInfo::new_one_mod_with_subpath(repo, subpath)
     } else {
         let api = github::as_installation(installation_id);
-        extract_mods_from_repository(&api, &repo).await
+        match get_repo_info(&api, &repo).await {
+            None => return Err("No mods."),
+            Some(repo_info) => repo_info,
+        }
     };
-    if mods.is_empty() {
-        return Err("No mods.");
-    }
-    Ok((installation_id, mods))
+    Ok((installation_id, repo_info))
 }
 
 async fn trigger_update_all_repositories() {
@@ -102,12 +102,12 @@ async fn trigger_update_all_repositories() {
 }
 
 fn filter_repositories_for_update_all(
-    repositories: Vec<(String, Vec<GithubModName>, InstallationId)>
-) -> Vec<(String, Vec<GithubModName>, InstallationId)> {
+    repositories: Vec<(String, GithubRepoInfo, InstallationId)>
+) -> Vec<(String, GithubRepoInfo, InstallationId)> {
     repositories
         .into_iter()
-        .filter(|(full_name, mods, _)| {
-            let weekly_update_from_crowdin = mods.iter().all(|it| it.weekly_update_from_crowdin);
+        .filter(|(full_name, repo_info, _)| {
+            let weekly_update_from_crowdin = repo_info.mods.iter().all(|it| it.weekly_update_from_crowdin);
             if !weekly_update_from_crowdin {
                 info!("[update-github-from-crowdin] [{}] skipping update because weekly_update_from_crowdin=false", full_name);
             }
@@ -116,23 +116,23 @@ fn filter_repositories_for_update_all(
         .collect()
 }
 
-async fn push_crowdin_changes_to_repositories(repositories: Vec<(String, Vec<GithubModName>, InstallationId)>) {
+async fn push_crowdin_changes_to_repositories(repositories: Vec<(String, GithubRepoInfo, InstallationId)>) {
     let repositories = crowdin::filter_repositories(repositories).await;
     if repositories.is_empty() { return; }
     let translations_directory = crowdin::download_all_translations().await;
-    for (repository, mods, installation_id) in repositories {
-        push_crowdin_changes_to_repository(repository, mods, installation_id, &translations_directory).await;
+    for (repository, repo_info, installation_id) in repositories {
+        push_crowdin_changes_to_repository(repository, repo_info, installation_id, &translations_directory).await;
     }
 }
 
 async fn push_crowdin_changes_to_repository(
     full_name: String,
-    mods: Vec<GithubModName>,
+    repo_info: GithubRepoInfo,
     installation_id: InstallationId,
     translations_directory: &TempDir,
 ) {
     let repository_directory = github::clone_repository(&full_name, installation_id).await;
-    for mod_ in mods {
+    for mod_ in repo_info.mods {
         let mod_directory = ModDirectory::new(&repository_directory, mod_);
         move_translated_files_to_mod_directory(&mod_directory, translations_directory.path()).await;
     }

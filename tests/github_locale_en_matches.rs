@@ -12,9 +12,9 @@ async fn main() {
     let api = github::as_app();
     let repositories = github::get_all_repositories(&api).await;
     let mut all_matches = true;
-    for (full_name, mods, installation_id) in repositories {
+    for (full_name, repo_info, installation_id) in repositories {
         let repository_directory = github::clone_repository(&full_name, installation_id).await;
-        for mod_ in mods {
+        for mod_ in repo_info.mods {
             let mod_directory = ModDirectory::new(&repository_directory, mod_);
             if !mod_directory.check_for_locale_folder() { continue; }
             if !mod_directory.check_translation_files_match_english_files(false) {

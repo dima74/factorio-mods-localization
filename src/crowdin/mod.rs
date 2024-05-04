@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use tempfile::TempDir;
 
 use crate::crowdin::http::{crowdin_get_empty_query, crowdin_get_pagination, crowdin_get_pagination_empty_query, crowdin_post, crowdin_put, DataWrapper, IdResponse, UnitResponse, upload_file_to_storage};
-use crate::github_mod_name::GithubModName;
+use crate::github_repo_info::{GithubModName, GithubRepoInfo};
 use crate::mod_directory::{LanguageCode, ModDirectory};
 use crate::myenv::is_development;
 use crate::util;
@@ -83,21 +83,17 @@ pub async fn create_directory(name: &str) -> DirectoryId {
 }
 
 pub async fn filter_repositories(
-    repositories: Vec<(String, Vec<GithubModName>, InstallationId)>
-) -> Vec<(String, Vec<GithubModName>, InstallationId)> {
+    repositories: Vec<(String, GithubRepoInfo, InstallationId)>
+) -> Vec<(String, GithubRepoInfo, InstallationId)> {
     let directories = list_directories().await
         .map(|(name, _id)| name)
         .collect::<HashSet<_>>();
     return repositories
         .into_iter()
-        .map(|(name, mods, api)| {
-            let mods = mods
-                .into_iter()
-                .filter(|it| directories.contains(&get_crowdin_directory_name(it)))
-                .collect::<Vec<_>>();
-            (name, mods, api)
+        .filter_map(|(name, repo_info, api)| {
+            let repo_info = repo_info.filter_mods_present_on_crowdin(&directories)?;
+            Some((name, repo_info, api))
         })
-        .filter(|(_name, mods, _api)| !mods.is_empty())
         .collect();
 }
 

@@ -4,7 +4,7 @@ use octocrab::Octocrab;
 
 use fml::{crowdin, github};
 use fml::crowdin::get_crowdin_directory_name;
-use fml::github_mod_name::GithubModName;
+use fml::github_repo_info::GithubModName;
 
 #[tokio::test]
 async fn main() {
@@ -48,8 +48,8 @@ async fn get_github_data() -> HashMap<String, HashSet<String>> {
     let api = github::as_app();
     let repositories = github::get_all_repositories(&api).await;
     let mut result = HashMap::new();
-    for (full_name, mods, installation_id) in repositories {
-        for mod_ in mods {
+    for (full_name, repo_info, installation_id) in repositories {
+        for mod_ in repo_info.mods {
             let installation_api = api.installation(installation_id);
             let files = match list_locale_en_files_for_mod(&full_name, &mod_, &installation_api).await {
                 Some(value) => value,
