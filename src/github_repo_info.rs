@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::fmt;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::crowdin::get_crowdin_directory_name;
 
@@ -15,7 +15,7 @@ use crate::crowdin::get_crowdin_directory_name;
 ///   "branch": "dev"
 /// }
 /// ```
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct GithubRepoInfo {
     pub full_name: String,
     pub mods: Vec<GithubModName>,
@@ -82,7 +82,7 @@ impl GithubRepoInfo {
 /// ├── Mod2
 /// │   ├── locale/en
 ///
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct GithubModName {
     pub owner: String,
     pub repo: String,

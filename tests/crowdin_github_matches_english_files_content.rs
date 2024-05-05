@@ -6,8 +6,9 @@ use std::fs::File;
 use std::io::{Seek, SeekFrom};
 use std::path::Path;
 
-use fml::{crowdin, mod_directory, util};
+use fml::{crowdin, util};
 use fml::crowdin::{get_crowdin_directory_name, replace_cfg_to_ini};
+use fml::github_repo_info::GithubRepoInfo;
 use fml::util::escape::escape_strings_in_ini_file;
 
 #[ignore]  // Ignore on CI
@@ -52,13 +53,11 @@ async fn download_github_files() {
     }
 
     let json = fs::read_to_string(Path::new("temp/repositories.json")).unwrap();
-    let repositories: Vec<String> = serde_json::from_str(&json).unwrap();
-    for full_name in repositories {
-        let (_owner, repo) = full_name.split_once('/').unwrap();
+    let repositories: Vec<GithubRepoInfo> = serde_json::from_str(&json).unwrap();
+    for repo_info in repositories {
+        let (_owner, repo) = repo_info.full_name.split_once('/').unwrap();
         let repository_directory = source_root.join(repo);
-        // TODO Remove `get_mods_impl` and store full `GithubRepoInfo` in `temp/repositories.json`
-        let mods = mod_directory::get_mods_impl(&full_name, &repository_directory);
-        for mod_ in mods {
+        for mod_ in repo_info.mods {
             let target_directory_name = get_crowdin_directory_name(&mod_);
             let target_directory = target_root.join(target_directory_name);
             fs::create_dir(&target_directory).unwrap();

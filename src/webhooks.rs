@@ -9,7 +9,7 @@ use WebhookEventPayload::{Installation, InstallationRepositories, Push};
 
 use crate::crowdin::CrowdinDirectory;
 use crate::github;
-use crate::github::GITHUB_MODS_FILE_NAME;
+use crate::github::GITHUB_CONFIG_FILE_NAME;
 use crate::github_repo_info::GithubRepoInfo;
 use crate::mod_directory::ModDirectory;
 
@@ -161,7 +161,7 @@ async fn handle_push_event_for_mod(mod_directory: ModDirectory) -> bool {
 fn has_interesting_changes(event: &PushWebhookEventPayload) -> bool {
     let mut changed_files = get_all_changed_files(&event);
     changed_files.any(|file| {
-        file == GITHUB_MODS_FILE_NAME || file.contains("locale/en/")
+        file == GITHUB_CONFIG_FILE_NAME || file.contains("locale/en/")
     })
 }
 

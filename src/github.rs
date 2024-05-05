@@ -21,7 +21,7 @@ use crate::util::EmptyBody;
 
 pub const GITHUB_USER_NAME: &str = "factorio-mods-helper";
 pub const GITHUB_BRANCH_NAME: &str = "crowdin-fml";
-pub const GITHUB_MODS_FILE_NAME: &str = "factorio-mods-localization.json";
+pub const GITHUB_CONFIG_FILE_NAME: &str = "factorio-mods-localization.json";
 const MAX_PER_PAGE: u8 = 100;
 
 fn get_credentials() -> (AppId, EncodingKey) {
@@ -68,8 +68,8 @@ pub async fn get_installation_id_for_repo(full_name: &str) -> Option<Installatio
 
 pub async fn get_repo_info(installation_api: &Octocrab, full_name: &str) -> Option<GithubRepoInfo> {
     let root_items = list_files_in_directory(installation_api, full_name, "").await.unwrap();
-    if root_items.iter().any(|it| it == GITHUB_MODS_FILE_NAME) {
-        let mods_file = get_content(installation_api, full_name, GITHUB_MODS_FILE_NAME).await.unwrap();
+    if root_items.iter().any(|it| it == GITHUB_CONFIG_FILE_NAME) {
+        let mods_file = get_content(installation_api, full_name, GITHUB_CONFIG_FILE_NAME).await.unwrap();
         let json = mods_file.items[0].decoded_content().unwrap();
         parse_github_repo_info_json(full_name, &json)
     } else {
