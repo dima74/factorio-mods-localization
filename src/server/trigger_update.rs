@@ -102,18 +102,17 @@ async fn trigger_update_all_repositories() {
 }
 
 fn filter_repositories_for_update_all(
-    repositories: Vec<(String, GithubRepoInfo, InstallationId)>
+    mut repositories: Vec<(String, GithubRepoInfo, InstallationId)>
 ) -> Vec<(String, GithubRepoInfo, InstallationId)> {
     repositories
-        .into_iter()
-        .filter(|(full_name, repo_info, _)| {
-            let weekly_update_from_crowdin = repo_info.mods.iter().all(|it| it.weekly_update_from_crowdin);
+        .retain(|(full_name, repo_info, _)| {
+            let weekly_update_from_crowdin = repo_info.weekly_update_from_crowdin;
             if !weekly_update_from_crowdin {
                 info!("[update-github-from-crowdin] [{}] skipping update because weekly_update_from_crowdin=false", full_name);
             }
             weekly_update_from_crowdin
-        })
-        .collect()
+        });
+    repositories
 }
 
 async fn push_crowdin_changes_to_repositories(repositories: Vec<(String, GithubRepoInfo, InstallationId)>) {

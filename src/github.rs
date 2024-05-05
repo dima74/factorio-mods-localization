@@ -312,16 +312,18 @@ mod tests {
         assert_eq!(
             get_repo_info(&api, "dima74/factorio-mod-example").await,
             Some(GithubRepoInfo {
-                mods: vec![GithubModName::new("dima74/factorio-mod-example", None, None)],
+                mods: vec![GithubModName::new("dima74/factorio-mod-example", None)],
+                weekly_update_from_crowdin: true,
             }),
         );
         assert_eq!(
             get_repo_info(&api, "dima74/factorio-multimod-example").await,
             Some(GithubRepoInfo {
                 mods: vec![
-                    GithubModName::new("dima74/factorio-multimod-example", Some("Mod1".to_owned()), None),
-                    GithubModName::new("dima74/factorio-multimod-example", Some("Mod2".to_owned()), None),
+                    GithubModName::new("dima74/factorio-multimod-example", Some("Mod1".to_owned())),
+                    GithubModName::new("dima74/factorio-multimod-example", Some("Mod2".to_owned())),
                 ],
+                weekly_update_from_crowdin: true,
             }),
         );
         assert_eq!(

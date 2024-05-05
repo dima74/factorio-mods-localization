@@ -16,31 +16,37 @@ use crate::crowdin::get_crowdin_directory_name;
 #[derive(Debug, Eq, PartialEq)]
 pub struct GithubRepoInfo {
     pub mods: Vec<GithubModName>,
+    pub weekly_update_from_crowdin: bool,
 }
 
 impl GithubRepoInfo {
+    fn new(
+        mods: Vec<GithubModName>,
+        weekly_update_from_crowdin: Option<bool>,
+    ) -> Self {
+        Self {
+            mods,
+            weekly_update_from_crowdin: weekly_update_from_crowdin.unwrap_or(true),
+        }
+    }
+
     pub fn new_from_config(
         mods: Vec<GithubModName>,
+        weekly_update_from_crowdin: Option<bool>,
     ) -> Option<Self> {
         if mods.is_empty() { return None; }
-        Some(Self {
-            mods,
-        })
+        Some(Self::new(mods, weekly_update_from_crowdin))
     }
 
     pub fn new_single_mod(full_name: &str) -> Self {
-        let mods = vec![GithubModName::new(full_name, None, None)];
-        Self {
-            mods,
-        }
+        let mods = vec![GithubModName::new(full_name, None)];
+        Self::new(mods, None)
     }
 
     // for debug routes
     pub fn new_one_mod_with_subpath(full_name: &str, subpath: String) -> Self {
-        let mods = vec![GithubModName::new(full_name, Some(subpath), None)];
-        Self {
-            mods,
-        }
+        let mods = vec![GithubModName::new(full_name, Some(subpath))];
+        Self::new(mods, None)
     }
 
     pub fn filter_mods_present_on_crowdin(
@@ -70,9 +76,6 @@ pub struct GithubModName {
     pub owner: String,
     pub repo: String,
     pub subpath: Option<String>,
-    // This is not good design of data structure. Instead this should be something like this:
-    // struct GithubRepoInfo { mods: Vec<...>, weekly_update_from_crowdin: bool }
-    pub weekly_update_from_crowdin: bool,
 }
 
 impl fmt::Display for GithubModName {
@@ -85,13 +88,12 @@ impl fmt::Display for GithubModName {
 }
 
 impl GithubModName {
-    pub fn new(full_name: &str, subpath: Option<String>, weekly_update_from_crowdin: Option<bool>) -> Self {
+    pub fn new(full_name: &str, subpath: Option<String>) -> Self {
         let (owner, repo) = full_name.split_once('/').unwrap();
         Self {
             owner: owner.to_owned(),
             repo: repo.to_owned(),
             subpath,
-            weekly_update_from_crowdin: weekly_update_from_crowdin.unwrap_or(true),
         }
     }
 }
@@ -115,19 +117,18 @@ pub fn parse_github_repo_info_json(full_name: &str, json: &str) -> Option<Github
         mods: Option<Vec<String>>,
         weekly_update_from_crowdin: Option<bool>,
     }
-    let (mods, weekly_update_from_crowdin) = match serde_json::from_str::<Data>(&json) {
-        Ok(data) => {
-            (data.mods, data.weekly_update_from_crowdin)
-        }
-        Err(_) => {
-            let mods: Vec<String> = serde_json::from_str(&json).unwrap();
-            (Some(mods), None)
-        }
-    };
-    let mods = match mods {
+    let data = serde_json::from_str::<Data>(&json)
+        .unwrap_or_else(|_| {
+            let mods = serde_json::from_str(&json).unwrap();
+            Data {
+                mods: Some(mods),
+                weekly_update_from_crowdin: None,
+            }
+        });
+    let mods = match data.mods {
         None => {
             // { "weekly_update_from_crowdin": false }
-            vec![GithubModName::new(full_name, None, weekly_update_from_crowdin)]
+            vec![GithubModName::new(full_name, None)]
         }
         Some(mods) => {
             mods
@@ -135,12 +136,12 @@ pub fn parse_github_repo_info_json(full_name: &str, json: &str) -> Option<Github
                 .map(|name| {
                     // only direct subdirectories are supported
                     assert!(name != "" && !name.starts_with(".") && !name.contains('/'));
-                    GithubModName::new(full_name, Some(name), weekly_update_from_crowdin)
+                    GithubModName::new(full_name, Some(name))
                 })
                 .collect()
         }
     };
-    GithubRepoInfo::new_from_config(mods)
+    GithubRepoInfo::new_from_config(mods, data.weekly_update_from_crowdin)
 }
 
 #[cfg(test)]
@@ -157,15 +158,14 @@ mod tests {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: Some("mod1".to_owned()),
-                        weekly_update_from_crowdin: true,
                     },
                     GithubModName {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: Some("mod2".to_owned()),
-                        weekly_update_from_crowdin: true,
                     },
                 ],
+                weekly_update_from_crowdin: true,
             })
         );
         assert_eq!(
@@ -177,15 +177,14 @@ mod tests {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: Some("mod1".to_owned()),
-                        weekly_update_from_crowdin: true,
                     },
                     GithubModName {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: Some("mod2".to_owned()),
-                        weekly_update_from_crowdin: true,
                     },
                 ],
+                weekly_update_from_crowdin: true,
             })
         );
         assert_eq!(
@@ -196,15 +195,14 @@ mod tests {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: Some("mod1".to_owned()),
-                        weekly_update_from_crowdin: false,
                     },
                     GithubModName {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: Some("mod2".to_owned()),
-                        weekly_update_from_crowdin: false,
                     },
                 ],
+                weekly_update_from_crowdin: false,
             })
         );
         assert_eq!(
@@ -215,9 +213,9 @@ mod tests {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: None,
-                        weekly_update_from_crowdin: false,
                     },
                 ],
+                weekly_update_from_crowdin: false,
             })
         );
         assert_eq!(
@@ -228,9 +226,9 @@ mod tests {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: None,
-                        weekly_update_from_crowdin: true,
                     },
                 ],
+                weekly_update_from_crowdin: true,
             })
         );
     }
