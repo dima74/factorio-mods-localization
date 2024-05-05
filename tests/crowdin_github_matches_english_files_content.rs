@@ -56,6 +56,7 @@ async fn download_github_files() {
     for full_name in repositories {
         let (_owner, repo) = full_name.split_once('/').unwrap();
         let repository_directory = source_root.join(repo);
+        // TODO Remove `get_mods_impl` and store full `GithubRepoInfo` in `temp/repositories.json`
         let mods = mod_directory::get_mods_impl(&full_name, &repository_directory);
         for mod_ in mods {
             let target_directory_name = get_crowdin_directory_name(&mod_);

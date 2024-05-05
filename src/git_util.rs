@@ -7,17 +7,20 @@ use log::{error, warn};
 use crate::github::{GITHUB_BRANCH_NAME, GITHUB_USER_NAME};
 use crate::myenv::{GIT_COMMIT_MESSAGE, GIT_COMMIT_USER_EMAIL, GIT_COMMIT_USER_NAME, GITHUB_PERSONAL_ACCESS_TOKEN};
 
-pub fn clone(url: &str, path: &Path) {
-    execute_git_command(
-        &path,
-        &[
-            "clone",
-            "--depth", "1",
-            url,
-            ".",  // clone to current directory
-        ],
-        true,
-    )
+pub fn clone(url: &str, path: &Path, branch: Option<&str>) {
+    let mut args = vec![
+        "clone",
+        "--depth", "1",
+    ];
+    if let Some(branch) = branch {
+        args.extend(&[
+            "--branch",
+            branch
+        ]);
+    }
+    args.push(url);
+    args.push(".");  // clone to current directory
+    execute_git_command(&path, &args, true)
 }
 
 pub fn add_all_and_check_has_changes(path: &Path) -> bool {

@@ -5,12 +5,14 @@ use serde::Deserialize;
 
 use crate::crowdin::get_crowdin_directory_name;
 
-/// `factorio-mods-localization.json` - config file in root of the repository
+/// `factorio-mods-localization.json` - config file in root of the repository.
+/// It should be in the *default* branch, even if some other "branch" is specified in config. 
 ///
 /// ```json
 /// {
 ///   "mods": ["mod1", "mod2"],
 ///   "weekly_update_from_crowdin": false,
+///   "branch": "dev"
 /// }
 /// ```
 #[derive(Debug, Eq, PartialEq)]
@@ -18,6 +20,8 @@ pub struct GithubRepoInfo {
     pub full_name: String,
     pub mods: Vec<GithubModName>,
     pub weekly_update_from_crowdin: bool,
+    /// Branch from which english files will be tracked and to which translations will be pushed
+    pub branch: Option<String>,
 }
 
 impl GithubRepoInfo {
@@ -25,11 +29,13 @@ impl GithubRepoInfo {
         full_name: &str,
         mods: Vec<GithubModName>,
         weekly_update_from_crowdin: Option<bool>,
+        branch: Option<String>,
     ) -> Self {
         Self {
             full_name: full_name.to_owned(),
             mods,
             weekly_update_from_crowdin: weekly_update_from_crowdin.unwrap_or(true),
+            branch,
         }
     }
 
@@ -37,20 +43,21 @@ impl GithubRepoInfo {
         full_name: &str,
         mods: Vec<GithubModName>,
         weekly_update_from_crowdin: Option<bool>,
+        branch: Option<String>,
     ) -> Option<Self> {
         if mods.is_empty() { return None; }
-        Some(Self::new(full_name, mods, weekly_update_from_crowdin))
+        Some(Self::new(full_name, mods, weekly_update_from_crowdin, branch))
     }
 
     pub fn new_single_mod(full_name: &str) -> Self {
         let mods = vec![GithubModName::new(full_name, None)];
-        Self::new(full_name, mods, None)
+        Self::new(full_name, mods, None, None)
     }
 
     // for debug routes
     pub fn new_one_mod_with_subpath(full_name: &str, subpath: String) -> Self {
         let mods = vec![GithubModName::new(full_name, Some(subpath))];
-        Self::new(full_name, mods, None)
+        Self::new(full_name, mods, None, None)
     }
 
     pub fn filter_mods_present_on_crowdin(
@@ -120,6 +127,7 @@ pub fn parse_github_repo_info_json(full_name: &str, json: &str) -> Option<Github
     struct Data {
         mods: Option<Vec<String>>,
         weekly_update_from_crowdin: Option<bool>,
+        branch: Option<String>,
     }
     let data = serde_json::from_str::<Data>(&json)
         .unwrap_or_else(|_| {
@@ -127,6 +135,7 @@ pub fn parse_github_repo_info_json(full_name: &str, json: &str) -> Option<Github
             Data {
                 mods: Some(mods),
                 weekly_update_from_crowdin: None,
+                branch: None,
             }
         });
     let mods = match data.mods {
@@ -145,7 +154,7 @@ pub fn parse_github_repo_info_json(full_name: &str, json: &str) -> Option<Github
                 .collect()
         }
     };
-    GithubRepoInfo::new_from_config(full_name, mods, data.weekly_update_from_crowdin)
+    GithubRepoInfo::new_from_config(full_name, mods, data.weekly_update_from_crowdin, data.branch)
 }
 
 #[cfg(test)]
@@ -153,7 +162,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_github_mod_names_json() {
+    fn test_parse_mods() {
         assert_eq!(
             parse_github_repo_info_json("owner/repo", r#"["mod1", "mod2"]"#),
             Some(GithubRepoInfo {
@@ -171,6 +180,7 @@ mod tests {
                     },
                 ],
                 weekly_update_from_crowdin: true,
+                branch: None,
             })
         );
         assert_eq!(
@@ -191,10 +201,75 @@ mod tests {
                     },
                 ],
                 weekly_update_from_crowdin: true,
+                branch: None,
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_weekly_update_from_crowdin() {
+        assert_eq!(
+            parse_github_repo_info_json("owner/repo", r#"{"weekly_update_from_crowdin": false}"#),
+            Some(GithubRepoInfo {
+                full_name: "owner/repo".to_owned(),
+                mods: vec![
+                    GithubModName {
+                        owner: "owner".to_owned(),
+                        repo: "repo".to_owned(),
+                        subpath: None,
+                    },
+                ],
+                weekly_update_from_crowdin: false,
+                branch: None,
             })
         );
         assert_eq!(
-            parse_github_repo_info_json("owner/repo", r#"{"mods": ["mod1", "mod2"], "weekly_update_from_crowdin": false}"#),
+            parse_github_repo_info_json("owner/repo", r#"{"weekly_update_from_crowdin": true}"#),
+            Some(GithubRepoInfo {
+                full_name: "owner/repo".to_owned(),
+                mods: vec![
+                    GithubModName {
+                        owner: "owner".to_owned(),
+                        repo: "repo".to_owned(),
+                        subpath: None,
+                    },
+                ],
+                weekly_update_from_crowdin: true,
+                branch: None,
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_branch() {
+        assert_eq!(
+            parse_github_repo_info_json("owner/repo", r#"{"branch": "dev"}"#),
+            Some(GithubRepoInfo {
+                full_name: "owner/repo".to_owned(),
+                mods: vec![
+                    GithubModName {
+                        owner: "owner".to_owned(),
+                        repo: "repo".to_owned(),
+                        subpath: None,
+                    },
+                ],
+                weekly_update_from_crowdin: true,
+                branch: Some("dev".to_owned()),
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_all() {
+        let json = r#"
+        {
+            "mods": ["mod1", "mod2"],
+            "weekly_update_from_crowdin": false,
+            "branch": "dev"
+        }
+        "#;
+        assert_eq!(
+            parse_github_repo_info_json("owner/repo", json),
             Some(GithubRepoInfo {
                 full_name: "owner/repo".to_owned(),
                 mods: vec![
@@ -210,34 +285,7 @@ mod tests {
                     },
                 ],
                 weekly_update_from_crowdin: false,
-            })
-        );
-        assert_eq!(
-            parse_github_repo_info_json("owner/repo", r#"{"weekly_update_from_crowdin": false}"#),
-            Some(GithubRepoInfo {
-                full_name: "owner/repo".to_owned(),
-                mods: vec![
-                    GithubModName {
-                        owner: "owner".to_owned(),
-                        repo: "repo".to_owned(),
-                        subpath: None,
-                    },
-                ],
-                weekly_update_from_crowdin: false,
-            })
-        );
-        assert_eq!(
-            parse_github_repo_info_json("owner/repo", r#"{"weekly_update_from_crowdin": true}"#),
-            Some(GithubRepoInfo {
-                full_name: "owner/repo".to_owned(),
-                mods: vec![
-                    GithubModName {
-                        owner: "owner".to_owned(),
-                        repo: "repo".to_owned(),
-                        subpath: None,
-                    },
-                ],
-                weekly_update_from_crowdin: true,
+                branch: Some("dev".to_owned()),
             })
         );
     }

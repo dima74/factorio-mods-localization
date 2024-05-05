@@ -133,7 +133,7 @@ async fn push_crowdin_changes_to_repository(
     translations_directory: &TempDir,
 ) {
     let full_name = &repo_info.full_name;
-    let repository_directory = github::clone_repository(full_name, installation_id).await;
+    let repository_directory = github::clone_repository(&repo_info, installation_id).await;
     for mod_ in repo_info.mods {
         let mod_directory = ModDirectory::new(&repository_directory, mod_);
         move_translated_files_to_mod_directory(&mod_directory, translations_directory.path()).await;
@@ -145,9 +145,10 @@ async fn push_crowdin_changes_to_repository(
         git_util::commit(path);
         let installation_api = github::as_installation(installation_id);
         let default_branch = github::get_default_branch(&installation_api, full_name).await;
-        let is_protected = github::is_branch_protected(&installation_api, full_name, &default_branch).await;
+        let base_branch = repo_info.branch.unwrap_or(default_branch);
+        let is_protected = github::is_branch_protected(&installation_api, full_name, &base_branch).await;
         if is_protected {
-            push_changes_using_pull_request(path, full_name, &default_branch).await;
+            push_changes_using_pull_request(path, full_name, &base_branch).await;
         } else {
             git_util::push(path);
             info!("[update-github-from-crowdin] [{}] pushed", full_name);
@@ -157,7 +158,7 @@ async fn push_crowdin_changes_to_repository(
     }
 }
 
-async fn push_changes_using_pull_request(path: &Path, full_name: &str, default_branch: &str) {
+async fn push_changes_using_pull_request(path: &Path, full_name: &str, base_branch: &str) {
     let personal_api = as_personal_account();
     let (owner, repo) = full_name.split_once('/').unwrap();
     if !github::fork_repository(&personal_api, owner, repo).await {
@@ -166,7 +167,7 @@ async fn push_changes_using_pull_request(path: &Path, full_name: &str, default_b
     let pushed = git_util::push_to_my_fork(path, repo);
     if pushed {
         sleep(Duration::from_secs(30)).await;
-        github::create_pull_request(&personal_api, &full_name, &default_branch).await;
+        github::create_pull_request(&personal_api, full_name, base_branch).await;
         info!("[update-github-from-crowdin] [{}] pushed to crowdin-fml branch and created PR", full_name);
     } else {
         info!("[update-github-from-crowdin] [{}] existing crowdin-fml branch has same content", full_name);

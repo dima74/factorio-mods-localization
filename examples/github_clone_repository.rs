@@ -1,3 +1,5 @@
+use fml::github_repo_info::GithubRepoInfo;
+
 #[tokio::main]
 async fn main() {
     fml::init();
@@ -8,5 +10,6 @@ async fn main() {
         .apps().get_repository_installation(owner, repo)
         .await.unwrap();
 
-    fml::github::clone_repository(&format!("{}/{}", owner, repo), installation.id).await;
+    let repo_info = GithubRepoInfo::new_single_mod(&format!("{}/{}", owner, repo));
+    fml::github::clone_repository(&repo_info, installation.id).await;
 }

@@ -24,10 +24,6 @@ impl RepositoryDirectory {
             root,
         }
     }
-
-    pub fn get_mods(&self) -> Vec<GithubModName> {
-        get_mods_impl(&self.full_name, self.root.path())
-    }
 }
 
 pub fn get_mods_impl(full_name: &str, root: &Path) -> Vec<GithubModName> {

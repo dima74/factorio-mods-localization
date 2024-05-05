@@ -86,7 +86,7 @@ async fn on_repositories_added(repositories: Vec<InstallationEventRepository>, i
 
 pub async fn on_repository_added(repo_info: GithubRepoInfo, installation_id: InstallationId) {
     info!("[email] app installed for repository {}", repo_info.full_name);
-    let repository_directory = github::clone_repository(&repo_info.full_name, installation_id).await;
+    let repository_directory = github::clone_repository(&repo_info, installation_id).await;
     for mod_ in repo_info.mods {
         let mod_directory = ModDirectory::new(&repository_directory, mod_);
         if !mod_directory.check_structure() { continue; }
@@ -97,8 +97,8 @@ pub async fn on_repository_added(repo_info: GithubRepoInfo, installation_id: Ins
     info!("[add-repository] [{}] success", repo_info.full_name);
 }
 
-pub async fn import_english(full_name: &str, repo_info: GithubRepoInfo, installation_id: InstallationId) {
-    let repository_directory = github::clone_repository(&full_name, installation_id).await;
+pub async fn import_english(repo_info: GithubRepoInfo, installation_id: InstallationId) {
+    let repository_directory = github::clone_repository(&repo_info, installation_id).await;
     for mod_ in repo_info.mods {
         let mod_directory = ModDirectory::new(&repository_directory, mod_);
         if !mod_directory.check_for_locale_folder() { continue; }
@@ -121,14 +121,15 @@ pub async fn on_push_event(
         return;
     };
 
-    let repository_directory = github::clone_repository(&full_name, installation_id).await;
-    let mods = repository_directory.get_mods();
-    if mods.is_empty() {
+    let api = github::as_installation(installation_id);
+    let Some(repo_info) = github::get_repo_info(&api, &full_name).await else {
         info!("[push-webhook] [{}] no mods found", full_name);
         return;
-    }
+    };
+
+    let repository_directory = github::clone_repository(&repo_info, installation_id).await;
     let mut created = false;
-    for mod_ in mods {
+    for mod_ in repo_info.mods {
         let mod_directory = ModDirectory::new(&repository_directory, mod_);
         if !mod_directory.check_for_locale_folder() { continue; }
         created |= handle_push_event_for_mod(mod_directory).await;

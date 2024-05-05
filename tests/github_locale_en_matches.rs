@@ -13,7 +13,7 @@ async fn main() {
     let repositories = github::get_all_repositories(&api).await;
     let mut all_matches = true;
     for (repo_info, installation_id) in repositories {
-        let repository_directory = github::clone_repository(&repo_info.full_name, installation_id).await;
+        let repository_directory = github::clone_repository(&repo_info, installation_id).await;
         for mod_ in repo_info.mods {
             let mod_directory = ModDirectory::new(&repository_directory, mod_);
             if !mod_directory.check_for_locale_folder() { continue; }

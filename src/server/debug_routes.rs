@@ -34,6 +34,6 @@ pub async fn import_english(
         Ok(value) => value,
         Err(value) => return value,
     };
-    webhooks::import_english(&repo, repo_info, installation_id).await;
+    webhooks::import_english(repo_info, installation_id).await;
     "Ok."
 }

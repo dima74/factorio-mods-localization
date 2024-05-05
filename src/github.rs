@@ -157,31 +157,38 @@ async fn get_all_repositories_of_installation(installation_api: &Octocrab) -> Ve
         .collect()
 }
 
-pub async fn clone_repository(full_name: &str, installation_id: InstallationId) -> RepositoryDirectory {
-    info!("[{}] clone repository", full_name);
+pub async fn clone_repository(
+    repo_info: &GithubRepoInfo,
+    installation_id: InstallationId,
+) -> RepositoryDirectory {
+    info!("[{}] clone repository", repo_info.full_name);
     use tempfile::TempDir;
     let directory = TempDir::with_prefix("FML.").unwrap();
-    clone_repository_to(full_name, installation_id, directory.path()).await;
-    RepositoryDirectory::new(full_name, directory)
+    clone_repository_to(repo_info, installation_id, directory.path()).await;
+    RepositoryDirectory::new(&repo_info.full_name, directory)
 }
 
-async fn clone_repository_to(full_name: &str, installation_id: InstallationId, path: &Path) {
+async fn clone_repository_to(
+    repo_info: &GithubRepoInfo,
+    installation_id: InstallationId,
+    path: &Path,
+) {
     use secrecy::ExposeSecret;
     let api = as_app();
     let (_, installation_token) = api.installation_and_token(installation_id).await.unwrap();
     let installation_token = installation_token.expose_secret();
-    let url = format!("https://x-access-token:{}@github.com/{}.git", installation_token, full_name);
-    git_util::clone(&url, path);
+    let url = format!("https://x-access-token:{}@github.com/{}.git", installation_token, repo_info.full_name);
+    git_util::clone(&url, path, repo_info.branch.as_deref());
 }
 
-pub async fn create_pull_request(personal_api: &Octocrab, full_name: &str, default_branch: &str) {
+pub async fn create_pull_request(personal_api: &Octocrab, full_name: &str, base_branch: &str) {
     let (owner, repo) = full_name.split_once('/').unwrap();
     let title = "Update translations from Crowdin";
     let body = "See https://github.com/dima74/factorio-mods-localization for details";
     let head_branch = format!("{}:{}", GITHUB_USER_NAME, GITHUB_BRANCH_NAME);
     let result = personal_api
         .pulls(owner, repo)
-        .create(title, head_branch, default_branch)
+        .create(title, head_branch, base_branch)
         .body(body)
         .maintainer_can_modify(true)
         .send().await;
@@ -316,6 +323,7 @@ mod tests {
                 full_name: "dima74/factorio-mod-example".to_owned(),
                 mods: vec![GithubModName::new("dima74/factorio-mod-example", None)],
                 weekly_update_from_crowdin: true,
+                branch: None,
             }),
         );
         assert_eq!(
@@ -327,6 +335,7 @@ mod tests {
                     GithubModName::new("dima74/factorio-multimod-example", Some("Mod2".to_owned())),
                 ],
                 weekly_update_from_crowdin: true,
+                branch: None,
             }),
         );
         assert_eq!(
