@@ -72,7 +72,7 @@ async fn list_locale_en_files_for_mod(
         None => "locale/en".to_owned(),
         Some(ref subpath) => format!("{}/locale/en", subpath),
     };
-    let files = github::list_files_in_directory(&installation_api, &full_name, &path).await.ok()?;
+    let files = github::list_files_in_directory(installation_api, full_name, &path).await.ok()?;
     let files = files
         .into_iter()
         .filter(|name| name.ends_with(".cfg"))

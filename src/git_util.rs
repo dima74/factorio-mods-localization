@@ -20,7 +20,7 @@ pub fn clone(url: &str, path: &Path, branch: Option<&str>) {
     }
     args.push(url);
     args.push(".");  // clone to current directory
-    execute_git_command(&path, &args, true)
+    execute_git_command(path, &args, true)
 }
 
 pub fn add_all_and_check_has_changes(path: &Path) -> bool {
@@ -29,7 +29,7 @@ pub fn add_all_and_check_has_changes(path: &Path) -> bool {
 }
 
 fn add_all(path: &Path) {
-    execute_git_command(&path, &["add", ".", "--all"], true);
+    execute_git_command(path, &["add", ".", "--all"], true);
 }
 
 pub fn commit(path: &Path) {
@@ -43,26 +43,26 @@ pub fn commit(path: &Path) {
         "commit",
         "-m", &message
     ];
-    execute_git_command(&path, args, true);
+    execute_git_command(path, args, true);
 }
 
 pub fn push(path: &Path) {
-    execute_git_command(&path, &["push"], false);
+    execute_git_command(path, &["push"], false);
 }
 
 pub fn push_to_my_fork(path: &Path, repo: &str) -> bool {
     let personal_token = GITHUB_PERSONAL_ACCESS_TOKEN.deref();
     let url = format!("https://x-access-token:{}@github.com/{}/{}.git", personal_token, GITHUB_USER_NAME, repo);
-    execute_git_command(&path, &["remote", "add", "my", &url], true);
+    execute_git_command(path, &["remote", "add", "my", &url], true);
 
-    execute_git_command(&path, &["fetch", "my"], true);
+    execute_git_command(path, &["fetch", "my"], true);
     let diff_refspec = format!("HEAD..my/{}", GITHUB_BRANCH_NAME);
     if !git_diff_has_changes(path, &diff_refspec) {
         return false;
     }
 
     let push_refspec = format!("HEAD:{}", GITHUB_BRANCH_NAME);
-    execute_git_command(&path, &["push", "my", &push_refspec, "--force"], true);
+    execute_git_command(path, &["push", "my", &push_refspec, "--force"], true);
     true
 }
 

@@ -129,9 +129,9 @@ pub fn parse_github_repo_info_json(full_name: &str, json: &str) -> Option<Github
         weekly_update_from_crowdin: Option<bool>,
         branch: Option<String>,
     }
-    let data = serde_json::from_str::<Data>(&json)
+    let data = serde_json::from_str::<Data>(json)
         .unwrap_or_else(|_| {
-            let mods = serde_json::from_str(&json).unwrap();
+            let mods = serde_json::from_str(json).unwrap();
             Data {
                 mods: Some(mods),
                 weekly_update_from_crowdin: None,
@@ -148,7 +148,7 @@ pub fn parse_github_repo_info_json(full_name: &str, json: &str) -> Option<Github
                 .into_iter()
                 .map(|name| {
                     // only direct subdirectories are supported
-                    assert!(name != "" && !name.starts_with(".") && !name.contains('/'));
+                    assert!(!name.is_empty() && !name.starts_with('.') && !name.contains('/'));
                     GithubModName::new(full_name, Some(name))
                 })
                 .collect()

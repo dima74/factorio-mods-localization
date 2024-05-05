@@ -95,7 +95,7 @@ async fn get_content(installation_api: &Octocrab, full_name: &str, path: &str) -
         .send()
         .await;
     if let Err(Error::GitHub { source, .. }) = &result {
-        if path == "" && source.errors == None && source.message == "This repository is empty." {
+        if path.is_empty() && source.errors.is_none() && source.message == "This repository is empty." {
             return Ok(ContentItems { items: vec![] });
         }
     }
@@ -149,7 +149,7 @@ async fn get_all_repositories_of_installation(installation_api: &Octocrab) -> Ve
     let parameters = serde_json::json!({"per_page": MAX_PER_PAGE});
     let repositories: Page<Repository> = installation_api
         .get("/installation/repositories", Some(&parameters)).await.unwrap();
-    let repositories = repositories.all_pages(&installation_api).await.unwrap();
+    let repositories = repositories.all_pages(installation_api).await.unwrap();
     repositories
         .into_iter()
         .filter(|it| !it.private.unwrap())
@@ -192,7 +192,7 @@ pub async fn create_pull_request(personal_api: &Octocrab, full_name: &str, base_
         .body(body)
         .maintainer_can_modify(true)
         .send().await;
-    check_create_pull_request_response(result, &full_name);
+    check_create_pull_request_response(result, full_name);
 }
 
 fn check_create_pull_request_response(result: octocrab::Result<PullRequest>, full_name: &str) {
@@ -207,7 +207,7 @@ fn check_create_pull_request_response(result: octocrab::Result<PullRequest>, ful
 fn is_error_pull_request_already_exists(error: &Error) -> bool {
     let Error::GitHub { source, .. } = &error else { return false; };
     if source.message != "Validation Failed" { return false; };
-    let Some(&[ref error, ..]) = source.errors.as_deref() else { return false; };
+    let Some([error, ..]) = source.errors.as_deref() else { return false; };
     let serde_json::Value::Object(error) = error else { return false; };
     let Some(serde_json::Value::String(message)) = error.get("message") else { return false; };
     message.starts_with("A pull request already exists for")
@@ -238,7 +238,7 @@ pub fn as_personal_account() -> Octocrab {
 }
 
 pub async fn fork_repository(personal_api: &Octocrab, owner: &str, repo: &str) -> bool {
-    if let Some(result) = check_fork_exists(&personal_api, owner, repo).await {
+    if let Some(result) = check_fork_exists(personal_api, owner, repo).await {
         return result;
     }
 
@@ -256,7 +256,7 @@ async fn check_fork_exists(api: &Octocrab, owner: &str, repo: &str) -> Option<bo
         .repos(owner, repo)
         .list_forks()
         .send().await.unwrap()
-        .all_pages(&api).await.unwrap();
+        .all_pages(api).await.unwrap();
     for fork in forks {
         let fork_full_name = fork.full_name.unwrap();
         let (fork_owner, fork_repo) = fork_full_name.split_once('/').unwrap();

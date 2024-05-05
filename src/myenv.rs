@@ -4,21 +4,21 @@ use std::sync::LazyLock;
 #[derive(Eq, PartialEq)]
 enum Environment {
     /// Env not checked
-    DEVELOPMENT,
+    Development,
     /// Some env are required
     CI,
     /// All env are required
-    PRODUCTION,
+    Production,
 }
 
 fn current_environment() -> Environment {
     if is_development() {
-        return Environment::DEVELOPMENT;
+        return Environment::Development;
     }
     if dotenv::var("CI").is_ok() {
         return Environment::CI;
     }
-    return Environment::PRODUCTION;
+    Environment::Production
 }
 
 pub fn is_development() -> bool {
@@ -32,9 +32,9 @@ macro_rules! gen {
         )*
         pub fn init() {
             let environment = current_environment();
-            if environment == Environment::DEVELOPMENT { return; }
+            if environment == Environment::Development { return; }
             $(
-                if $ci == 1 || environment == Environment::PRODUCTION {
+                if $ci == 1 || environment == Environment::Production {
                     let _ = $name.deref();
                 }
             )*

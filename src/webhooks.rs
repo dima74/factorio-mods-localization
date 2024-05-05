@@ -116,7 +116,7 @@ pub async fn on_push_event(
 ) {
     info!("\n[push-webhook] [{}] starting...", full_name);
 
-    if !has_interesting_changes(&event) {
+    if !has_interesting_changes(event) {
         info!("[push-webhook] [{}] no modified/added english files found", full_name);
         return;
     };
@@ -159,7 +159,7 @@ async fn handle_push_event_for_mod(mod_directory: ModDirectory) -> bool {
 }
 
 fn has_interesting_changes(event: &PushWebhookEventPayload) -> bool {
-    let mut changed_files = get_all_changed_files(&event);
+    let mut changed_files = get_all_changed_files(event);
     changed_files.any(|file| {
         file == GITHUB_CONFIG_FILE_NAME || file.contains("locale/en/")
     })

@@ -58,6 +58,7 @@ pub async fn crowdin_get_pagination<T: DeserializeOwned>(path: &str, before_send
             let request = before_send(request);
             let request = request.query(&[("offset", i)]);
             let request = request.query(&[("limit", LIMIT)]);
+            #[allow(clippy::let_and_return)]
             request
         }).await;
         if items.is_empty() { break; }

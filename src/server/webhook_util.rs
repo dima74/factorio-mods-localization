@@ -39,7 +39,7 @@ impl GithubEvent {
         let signature = request
             .headers()
             .get_one("X-Hub-Signature-256")
-            .and_then(|header| parse_signature(header))
+            .and_then(parse_signature)
             .ok_or("Invalid signature")?;
 
         // Read the data into a String
@@ -59,12 +59,12 @@ fn verify_signature(signature: &[u8], content: &[u8]) -> Result<(), impl Error> 
     let secret = GITHUB_APP_WEBHOOKS_SECRET.deref();
     let mut mac = Hmac::<Sha256>::new_from_slice(secret.as_bytes())
         .expect("HMAC can take key of any size");
-    mac.update(&content);
+    mac.update(content);
     mac.verify_slice(signature)
 }
 
 fn parse_signature(header: &str) -> Option<Vec<u8>> {
     let header = header.trim();
-    let Some(digest) = header.strip_prefix("sha256=") else { return None; };
+    let digest = header.strip_prefix("sha256=")?;
     hex::decode(digest).ok()
 }

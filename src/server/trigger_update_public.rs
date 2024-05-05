@@ -30,7 +30,7 @@ pub async fn trigger_update(repo: Option<String>) -> Result<Redirect, &'static s
     let mut url = Url::parse("https://github.com/login/oauth/authorize").unwrap();
     url.query_pairs_mut()
         .append_pair("client_id", GITHUB_OAUTH_CLIENT_ID.deref())
-        .append_pair("redirect_uri", &redirect_url.to_string())
+        .append_pair("redirect_uri", redirect_url.as_ref())
         .append_pair("login", owner)
         .append_pair("allow_signup", "false");
     Ok(Redirect::to(url.to_string()))

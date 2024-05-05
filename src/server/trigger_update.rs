@@ -94,8 +94,8 @@ pub async fn get_installation_id_and_repo_info(
 async fn trigger_update_all_repositories() {
     let _lock = get_trigger_update_mutex().await;
     info!("\n[update-github-from-crowdin] [*] starting...");
-    let mut api = github::as_app();
-    let repositories = github::get_all_repositories(&mut api).await;
+    let api = github::as_app();
+    let repositories = github::get_all_repositories(&api).await;
     let repositories = filter_repositories_for_update_all(repositories);
     push_crowdin_changes_to_repositories(repositories).await;
     info!("[update-github-from-crowdin] [*] success");

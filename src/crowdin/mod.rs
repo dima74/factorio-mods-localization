@@ -88,13 +88,13 @@ pub async fn filter_repositories(
     let directories = list_directories().await
         .map(|(name, _id)| name)
         .collect::<HashSet<_>>();
-    return repositories
+    repositories
         .into_iter()
         .filter_map(|(repo_info, api)| {
             let repo_info = repo_info.filter_mods_present_on_crowdin(&directories)?;
             Some((repo_info, api))
         })
-        .collect();
+        .collect()
 }
 
 // https://developer.crowdin.com/api/v2/#operation/api.projects.files.post
@@ -248,22 +248,22 @@ impl CrowdinDirectory {
     ) -> FileId {
         match existing_crowdin_files.get(file_name_ini) {
             Some(&file_id) => {
-                self.update_english_file(file_id, &file_path, &file_name_ini).await;
+                self.update_english_file(file_id, file_path, file_name_ini).await;
                 file_id
             }
             None => {
-                self.add_english_file(&file_path, &file_name_ini).await
+                self.add_english_file(file_path, file_name_ini).await
             }
         }
     }
 
     async fn add_english_file(&self, file: &Path, file_name: &str) -> FileId {
-        let storage_id = self.upload_file_to_storage(file, &file_name).await;
-        add_english_file(self.crowdin_id, storage_id, &file_name).await
+        let storage_id = self.upload_file_to_storage(file, file_name).await;
+        add_english_file(self.crowdin_id, storage_id, file_name).await
     }
 
     async fn update_english_file(&self, file_id: FileId, file: &Path, file_name: &str) {
-        let storage_id = self.upload_file_to_storage(file, &file_name).await;
+        let storage_id = self.upload_file_to_storage(file, file_name).await;
         update_english_file(file_id, storage_id).await;
     }
 
@@ -284,7 +284,7 @@ impl CrowdinDirectory {
         english_file_id: FileId,
         language_code: &LanguageCode,
     ) {
-        let storage_id = self.upload_file_to_storage(file, &file_name).await;
+        let storage_id = self.upload_file_to_storage(file, file_name).await;
         add_localization_file(english_file_id, storage_id, language_code).await;
     }
 
