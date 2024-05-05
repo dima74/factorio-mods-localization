@@ -83,16 +83,16 @@ pub async fn create_directory(name: &str) -> DirectoryId {
 }
 
 pub async fn filter_repositories(
-    repositories: Vec<(String, GithubRepoInfo, InstallationId)>
-) -> Vec<(String, GithubRepoInfo, InstallationId)> {
+    repositories: Vec<(GithubRepoInfo, InstallationId)>
+) -> Vec<(GithubRepoInfo, InstallationId)> {
     let directories = list_directories().await
         .map(|(name, _id)| name)
         .collect::<HashSet<_>>();
     return repositories
         .into_iter()
-        .filter_map(|(name, repo_info, api)| {
+        .filter_map(|(repo_info, api)| {
             let repo_info = repo_info.filter_mods_present_on_crowdin(&directories)?;
-            Some((name, repo_info, api))
+            Some((repo_info, api))
         })
         .collect();
 }

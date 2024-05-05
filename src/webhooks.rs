@@ -77,16 +77,16 @@ async fn on_repositories_added(repositories: Vec<InstallationEventRepository>, i
         let Some(repo_info) = github::get_repo_info(&api, &repository).await else {
             continue;
         };
-        on_repository_added(&repository, repo_info, installation_id).await;
+        on_repository_added(repo_info, installation_id).await;
 
         let api_personal = github::as_personal_account();
         github::star_repository(&api_personal, &repository).await;
     }
 }
 
-pub async fn on_repository_added(full_name: &str, repo_info: GithubRepoInfo, installation_id: InstallationId) {
-    info!("[email] app installed for repository {}", full_name);
-    let repository_directory = github::clone_repository(&full_name, installation_id).await;
+pub async fn on_repository_added(repo_info: GithubRepoInfo, installation_id: InstallationId) {
+    info!("[email] app installed for repository {}", repo_info.full_name);
+    let repository_directory = github::clone_repository(&repo_info.full_name, installation_id).await;
     for mod_ in repo_info.mods {
         let mod_directory = ModDirectory::new(&repository_directory, mod_);
         if !mod_directory.check_structure() { continue; }
@@ -94,7 +94,7 @@ pub async fn on_repository_added(full_name: &str, repo_info: GithubRepoInfo, ins
         let (crowdin_directory, _) = CrowdinDirectory::get_or_create(mod_directory).await;
         crowdin_directory.add_english_and_localization_files().await;
     }
-    info!("[add-repository] [{}] success", full_name);
+    info!("[add-repository] [{}] success", repo_info.full_name);
 }
 
 pub async fn import_english(full_name: &str, repo_info: GithubRepoInfo, installation_id: InstallationId) {

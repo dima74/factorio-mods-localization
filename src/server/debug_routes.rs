@@ -17,7 +17,7 @@ pub async fn import_repository(
         Ok(value) => value,
         Err(value) => return value,
     };
-    webhooks::on_repository_added(&repo, repo_info, installation_id).await;
+    webhooks::on_repository_added(repo_info, installation_id).await;
     "Ok."
 }
 

@@ -55,14 +55,14 @@ pub async fn trigger_update_single_repository_part1(
         Ok(value) => value,
         Err(message) => return Err(message),
     };
-    let repositories = vec![(full_name.to_owned(), repo_info, installation_id)];
+    let repositories = vec![(repo_info, installation_id)];
     let task = trigger_update_single_repository_part2(repositories, full_name);
     tokio::spawn(task);
     Ok("Triggered. See logs for details.")
 }
 
 async fn trigger_update_single_repository_part2(
-    repositories: Vec<(String, GithubRepoInfo, InstallationId)>,
+    repositories: Vec<(GithubRepoInfo, InstallationId)>,
     full_name: String,
 ) {
     let _lock = get_trigger_update_mutex().await;
@@ -71,19 +71,19 @@ async fn trigger_update_single_repository_part2(
 }
 
 pub async fn get_installation_id_and_repo_info(
-    repo: &str,
+    full_name: &str,
     subpath: Option<String>,
 ) -> Result<(InstallationId, GithubRepoInfo), &'static str> {
-    let installation_id = match github::get_installation_id_for_repo(&repo).await {
+    let installation_id = match github::get_installation_id_for_repo(full_name).await {
         Some(id) => id,
         None => return Err("Can't find installation for repository"),
     };
 
     let repo_info = if let Some(subpath) = subpath {
-        GithubRepoInfo::new_one_mod_with_subpath(repo, subpath)
+        GithubRepoInfo::new_one_mod_with_subpath(full_name, subpath)
     } else {
         let api = github::as_installation(installation_id);
-        match get_repo_info(&api, &repo).await {
+        match get_repo_info(&api, full_name).await {
             None => return Err("No mods."),
             Some(repo_info) => repo_info,
         }
@@ -102,35 +102,38 @@ async fn trigger_update_all_repositories() {
 }
 
 fn filter_repositories_for_update_all(
-    mut repositories: Vec<(String, GithubRepoInfo, InstallationId)>
-) -> Vec<(String, GithubRepoInfo, InstallationId)> {
+    mut repositories: Vec<(GithubRepoInfo, InstallationId)>
+) -> Vec<(GithubRepoInfo, InstallationId)> {
     repositories
-        .retain(|(full_name, repo_info, _)| {
+        .retain(|(repo_info, _)| {
             let weekly_update_from_crowdin = repo_info.weekly_update_from_crowdin;
             if !weekly_update_from_crowdin {
-                info!("[update-github-from-crowdin] [{}] skipping update because weekly_update_from_crowdin=false", full_name);
+                info!(
+                    "[update-github-from-crowdin] [{}] skipping update because weekly_update_from_crowdin=false", 
+                    repo_info.full_name
+                );
             }
             weekly_update_from_crowdin
         });
     repositories
 }
 
-async fn push_crowdin_changes_to_repositories(repositories: Vec<(String, GithubRepoInfo, InstallationId)>) {
+async fn push_crowdin_changes_to_repositories(repositories: Vec<(GithubRepoInfo, InstallationId)>) {
     let repositories = crowdin::filter_repositories(repositories).await;
     if repositories.is_empty() { return; }
     let translations_directory = crowdin::download_all_translations().await;
-    for (repository, repo_info, installation_id) in repositories {
-        push_crowdin_changes_to_repository(repository, repo_info, installation_id, &translations_directory).await;
+    for (repo_info, installation_id) in repositories {
+        push_crowdin_changes_to_repository(repo_info, installation_id, &translations_directory).await;
     }
 }
 
 async fn push_crowdin_changes_to_repository(
-    full_name: String,
     repo_info: GithubRepoInfo,
     installation_id: InstallationId,
     translations_directory: &TempDir,
 ) {
-    let repository_directory = github::clone_repository(&full_name, installation_id).await;
+    let full_name = &repo_info.full_name;
+    let repository_directory = github::clone_repository(full_name, installation_id).await;
     for mod_ in repo_info.mods {
         let mod_directory = ModDirectory::new(&repository_directory, mod_);
         move_translated_files_to_mod_directory(&mod_directory, translations_directory.path()).await;
@@ -141,10 +144,10 @@ async fn push_crowdin_changes_to_repository(
         info!("[update-github-from-crowdin] [{}] found changes", full_name);
         git_util::commit(path);
         let installation_api = github::as_installation(installation_id);
-        let default_branch = github::get_default_branch(&installation_api, &full_name).await;
-        let is_protected = github::is_branch_protected(&installation_api, &full_name, &default_branch).await;
+        let default_branch = github::get_default_branch(&installation_api, full_name).await;
+        let is_protected = github::is_branch_protected(&installation_api, full_name, &default_branch).await;
         if is_protected {
-            push_changes_using_pull_request(path, &full_name, &default_branch).await;
+            push_changes_using_pull_request(path, full_name, &default_branch).await;
         } else {
             git_util::push(path);
             info!("[update-github-from-crowdin] [{}] pushed", full_name);

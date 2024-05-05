@@ -129,7 +129,7 @@ pub async fn get_all_installations(api: &Octocrab) -> Vec<Installation> {
         .all_pages(api).await.unwrap()
 }
 
-pub async fn get_all_repositories(api: &Octocrab) -> Vec<(String, GithubRepoInfo, InstallationId)> {
+pub async fn get_all_repositories(api: &Octocrab) -> Vec<(GithubRepoInfo, InstallationId)> {
     let mut result = Vec::new();
     let installations = get_all_installations(api).await;
     for installation in installations {
@@ -138,7 +138,7 @@ pub async fn get_all_repositories(api: &Octocrab) -> Vec<(String, GithubRepoInfo
         for repository in repositories {
             let repo_info = get_repo_info(&installation_api, &repository).await;
             if let Some(repo_info) = repo_info {
-                result.push((repository, repo_info, installation.id));
+                result.push((repo_info, installation.id));
             }
         }
     }
@@ -285,7 +285,8 @@ pub async fn get_not_starred_repositories() -> Vec<String> {
 
     let api_personal = as_personal_account();
     let mut not_starred = Vec::new();
-    for (full_name, _repo_info, _id) in repositories {
+    for (repo_info, _id) in repositories {
+        let full_name = repo_info.full_name;
         if !is_repository_starred(&api_personal, &full_name).await {
             not_starred.push(full_name);
         }
@@ -312,6 +313,7 @@ mod tests {
         assert_eq!(
             get_repo_info(&api, "dima74/factorio-mod-example").await,
             Some(GithubRepoInfo {
+                full_name: "dima74/factorio-mod-example".to_owned(),
                 mods: vec![GithubModName::new("dima74/factorio-mod-example", None)],
                 weekly_update_from_crowdin: true,
             }),
@@ -319,6 +321,7 @@ mod tests {
         assert_eq!(
             get_repo_info(&api, "dima74/factorio-multimod-example").await,
             Some(GithubRepoInfo {
+                full_name: "dima74/factorio-multimod-example".to_owned(),
                 mods: vec![
                     GithubModName::new("dima74/factorio-multimod-example", Some("Mod1".to_owned())),
                     GithubModName::new("dima74/factorio-multimod-example", Some("Mod2".to_owned())),

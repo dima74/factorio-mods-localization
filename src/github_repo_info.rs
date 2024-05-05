@@ -15,38 +15,42 @@ use crate::crowdin::get_crowdin_directory_name;
 /// ```
 #[derive(Debug, Eq, PartialEq)]
 pub struct GithubRepoInfo {
+    pub full_name: String,
     pub mods: Vec<GithubModName>,
     pub weekly_update_from_crowdin: bool,
 }
 
 impl GithubRepoInfo {
     fn new(
+        full_name: &str,
         mods: Vec<GithubModName>,
         weekly_update_from_crowdin: Option<bool>,
     ) -> Self {
         Self {
+            full_name: full_name.to_owned(),
             mods,
             weekly_update_from_crowdin: weekly_update_from_crowdin.unwrap_or(true),
         }
     }
 
     pub fn new_from_config(
+        full_name: &str,
         mods: Vec<GithubModName>,
         weekly_update_from_crowdin: Option<bool>,
     ) -> Option<Self> {
         if mods.is_empty() { return None; }
-        Some(Self::new(mods, weekly_update_from_crowdin))
+        Some(Self::new(full_name, mods, weekly_update_from_crowdin))
     }
 
     pub fn new_single_mod(full_name: &str) -> Self {
         let mods = vec![GithubModName::new(full_name, None)];
-        Self::new(mods, None)
+        Self::new(full_name, mods, None)
     }
 
     // for debug routes
     pub fn new_one_mod_with_subpath(full_name: &str, subpath: String) -> Self {
         let mods = vec![GithubModName::new(full_name, Some(subpath))];
-        Self::new(mods, None)
+        Self::new(full_name, mods, None)
     }
 
     pub fn filter_mods_present_on_crowdin(
@@ -141,7 +145,7 @@ pub fn parse_github_repo_info_json(full_name: &str, json: &str) -> Option<Github
                 .collect()
         }
     };
-    GithubRepoInfo::new_from_config(mods, data.weekly_update_from_crowdin)
+    GithubRepoInfo::new_from_config(full_name, mods, data.weekly_update_from_crowdin)
 }
 
 #[cfg(test)]
@@ -153,6 +157,7 @@ mod tests {
         assert_eq!(
             parse_github_repo_info_json("owner/repo", r#"["mod1", "mod2"]"#),
             Some(GithubRepoInfo {
+                full_name: "owner/repo".to_owned(),
                 mods: vec![
                     GithubModName {
                         owner: "owner".to_owned(),
@@ -171,6 +176,7 @@ mod tests {
         assert_eq!(
             parse_github_repo_info_json("owner/repo", r#"{"mods": ["mod1", "mod2"]}"#),
             Some(GithubRepoInfo {
+                full_name: "owner/repo".to_owned(),
                 mods:
                 vec![
                     GithubModName {
@@ -190,6 +196,7 @@ mod tests {
         assert_eq!(
             parse_github_repo_info_json("owner/repo", r#"{"mods": ["mod1", "mod2"], "weekly_update_from_crowdin": false}"#),
             Some(GithubRepoInfo {
+                full_name: "owner/repo".to_owned(),
                 mods: vec![
                     GithubModName {
                         owner: "owner".to_owned(),
@@ -208,6 +215,7 @@ mod tests {
         assert_eq!(
             parse_github_repo_info_json("owner/repo", r#"{"weekly_update_from_crowdin": false}"#),
             Some(GithubRepoInfo {
+                full_name: "owner/repo".to_owned(),
                 mods: vec![
                     GithubModName {
                         owner: "owner".to_owned(),
@@ -221,6 +229,7 @@ mod tests {
         assert_eq!(
             parse_github_repo_info_json("owner/repo", r#"{"weekly_update_from_crowdin": true}"#),
             Some(GithubRepoInfo {
+                full_name: "owner/repo".to_owned(),
                 mods: vec![
                     GithubModName {
                         owner: "owner".to_owned(),
