@@ -46,6 +46,9 @@ pub async fn main() {
         version,
         debug_routes::import_repository,
         debug_routes::import_english,
+        debug_routes::list_repositories,
+        debug_routes::list_repositories_for_user,
+        debug_routes::list_users,
         example_error_routes::error1,
         example_error_routes::error2,
     ];

@@ -41,13 +41,12 @@ pub fn as_installation(installation_id: InstallationId) -> Octocrab {
 }
 
 // for tests/examples
-pub async fn as_installation_for_user(login: &str) -> Octocrab {
+pub async fn as_installation_for_user(login: &str) -> Option<Octocrab> {
     let api = as_app();
-    let installation_id = get_all_installations(&api).await
-        .iter().find(|it| it.account.login == login)
-        .unwrap_or_else(|| panic!("App is not installed for {}", login))
-        .id;
-    api.installation(installation_id)
+    let installation = get_all_installations(&api).await
+        .into_iter()
+        .find(|it| it.account.login == login)?;
+    Some(api.installation(installation.id))
 }
 
 pub async fn get_installation_id_for_user(login: &str) -> InstallationId {
@@ -145,7 +144,7 @@ pub async fn get_all_repositories(api: &Octocrab) -> Vec<(GithubRepoInfo, Instal
     result
 }
 
-async fn get_all_repositories_of_installation(installation_api: &Octocrab) -> Vec<String> {
+pub async fn get_all_repositories_of_installation(installation_api: &Octocrab) -> Vec<String> {
     let parameters = serde_json::json!({"per_page": MAX_PER_PAGE});
     let repositories: Page<Repository> = installation_api
         .get("/installation/repositories", Some(&parameters)).await.unwrap();
@@ -316,7 +315,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_has_locale_en() {
-        let api = as_installation_for_user("dima74").await;
+        let api = as_installation_for_user("dima74").await.unwrap();
         assert_eq!(
             get_repo_info(&api, "dima74/factorio-mod-example").await,
             Some(GithubRepoInfo {
