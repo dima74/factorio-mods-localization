@@ -236,21 +236,29 @@ pub fn as_personal_account() -> Octocrab {
         .unwrap()
 }
 
-pub async fn fork_repository(personal_api: &Octocrab, owner: &str, repo: &str) -> bool {
-    if let Some(result) = check_fork_exists(personal_api, owner, repo).await {
-        return result;
+pub async fn fork_repository(personal_api: &Octocrab, full_name: &str) -> bool {
+    if let Some(is_fork_name_correct) = check_fork_exists(personal_api, full_name).await {
+        return is_fork_name_correct;
     }
+    fork_repository_without_check(personal_api, full_name).await;
+    true
+}
 
-    info!("[update-github-from-crowdin] [{}/{}] forking repository...", owner, repo);
+pub async fn fork_repository_without_check(personal_api: &Octocrab, full_name: &str) {
+    let (owner, repo) = full_name.split_once('/').unwrap();
+    info!("[update-github-from-crowdin] [{}] forking repository...", full_name);
     personal_api
         .repos(owner, repo)
         .create_fork()
         .send().await.unwrap();
     sleep(Duration::from_secs(120)).await;
-    true
 }
 
-async fn check_fork_exists(api: &Octocrab, owner: &str, repo: &str) -> Option<bool> {
+// None => no fork
+// Some(false) => fork with different name
+// Some(true) => fork exists and can be used
+async fn check_fork_exists(api: &Octocrab, full_name: &str) -> Option<bool> {
+    let (owner, repo) = full_name.split_once('/').unwrap();
     let forks = api
         .repos(owner, repo)
         .list_forks()
@@ -270,6 +278,29 @@ async fn check_fork_exists(api: &Octocrab, owner: &str, repo: &str) -> Option<bo
         }
     }
     None
+}
+
+#[derive(Default)]
+pub struct GetNotForkedResult {
+    pub not_forked: Vec<String>,
+    pub forked_with_diferrent_name: Vec<String>,
+}
+
+pub async fn get_not_forked_repositories() -> GetNotForkedResult {
+    let api_app = as_app();
+    let repositories = get_all_repositories(&api_app).await;
+
+    let api_personal = as_personal_account();
+    let mut result = GetNotForkedResult::default();
+    for (repo_info, _id) in repositories {
+        let full_name = repo_info.full_name;
+        match check_fork_exists(&api_personal, &full_name).await {
+            None => result.not_forked.push(full_name),
+            Some(false) => result.forked_with_diferrent_name.push(full_name),
+            Some(true) => continue,
+        }
+    }
+    result
 }
 
 pub async fn star_repository(api: &Octocrab, full_name: &str) {

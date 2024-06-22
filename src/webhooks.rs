@@ -78,9 +78,7 @@ async fn on_repositories_added(repositories: Vec<InstallationEventRepository>, i
             continue;
         };
         on_repository_added(repo_info, installation_id).await;
-
-        let api_personal = github::as_personal_account();
-        github::star_repository(&api_personal, &repository).await;
+        star_and_fork_repository(&repository).await;
     }
 }
 
@@ -137,8 +135,7 @@ pub async fn on_push_event(
     info!("[push-webhook] [{}] success", full_name);
 
     if created {
-        let api_personal = github::as_personal_account();
-        github::star_repository(&api_personal, &full_name).await;
+        star_and_fork_repository(&full_name).await;
     }
 }
 
@@ -173,4 +170,14 @@ fn get_all_changed_files(event: &PushWebhookEventPayload) -> impl Iterator<Item=
             let removed = commit.removed.iter();
             added.chain(modified).chain(removed).map(Deref::deref)
         })
+}
+
+// This is needed for correct counting of contributions,
+// so they will be displayed at https://github.com/factorio-mods-helper.
+// Previously it was enough to star repository, but it was changed somewhere in 2023-2024.
+// https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-profile/managing-contribution-settings-on-your-profile/why-are-my-contributions-not-showing-up-on-my-profile
+async fn star_and_fork_repository(repository: &str) {
+    let api_personal = github::as_personal_account();
+    github::star_repository(&api_personal, repository).await;
+    github::fork_repository(&api_personal, repository).await;
 }

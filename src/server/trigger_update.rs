@@ -160,10 +160,10 @@ async fn push_crowdin_changes_to_repository(
 
 async fn push_changes_using_pull_request(path: &Path, full_name: &str, base_branch: &str) {
     let personal_api = as_personal_account();
-    let (owner, repo) = full_name.split_once('/').unwrap();
-    if !github::fork_repository(&personal_api, owner, repo).await {
+    if !github::fork_repository(&personal_api, full_name).await {
         return;
     }
+    let (_owner, repo) = full_name.split_once('/').unwrap();
     let pushed = git_util::push_to_my_fork(path, repo);
     if pushed {
         sleep(Duration::from_secs(30)).await;
