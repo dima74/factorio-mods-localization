@@ -12,6 +12,9 @@ const IGNORED_CROWDIN: &[&str] = &[
     "Factorio Mod Example (dima74)",
     // github repository deleted or hidden, but mod page still has link to crowdin, so keep for now
     "Factorio Ntech Chemistry (NathaU)",
+    // github repository deleted or hidden, keep for now
+    // https://mods.factorio.com/mod/better-victory-screen
+    "Factorio Better Victory Screen (heinwessels)",
     // uninstalled - https://github.com/raiguard/RecipeBook/issues/158
     "Recipe Book (raiguard)",
 ];
