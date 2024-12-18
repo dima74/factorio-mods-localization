@@ -6,6 +6,8 @@ use fml::crowdin::get_crowdin_directory_name;
 const IGNORED_GITHUB: &[&str] = &[
     // no locale/en
     "Sea Block - Sea Block Meta Pack (modded-factorio)",
+    // Mismatched locales - https://github.com/notnotmelon/extended-descriptions/issues/1
+    "Extended Descriptions (notnotmelon)",
 ];
 const IGNORED_CROWDIN: &[&str] = &[
     // Used for testing
