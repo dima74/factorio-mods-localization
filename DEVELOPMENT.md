@@ -43,7 +43,8 @@ From https://github.com/settings/apps/factorio-mods-localization-helper:
 * `GITHUB_APP_WEBHOOKS_SECRET` - Webhook secret
 
 From https://github.com/settings/tokens for https://github.com/factorio-mods-helper:
-* `GITHUB_PERSONAL_ACCESS_TOKEN` - classic token with `repo:public_repo` scope
+* `GITHUB_PERSONAL_ACCESS_TOKEN` - classic token with `repo` and `workflow` scopes
+  * Without `workflow` scope we can't change `.github/workflows` in the fork
 
 From https://github.com/settings/developers:
 * `GITHUB_OAUTH_CLIENT_ID`
