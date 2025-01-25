@@ -17,7 +17,7 @@ use crate::github_repo_info::{GithubRepoInfo, parse_github_repo_info_json};
 use crate::mod_directory::RepositoryDirectory;
 use crate::myenv::{GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, GITHUB_PERSONAL_ACCESS_TOKEN};
 use crate::sentry::sentry_report_error;
-use crate::util::EmptyBody;
+use crate::util::{create_temporary_directory, EmptyBody};
 
 pub const GITHUB_USER_NAME: &str = "factorio-mods-helper";
 pub const GITHUB_BRANCH_NAME: &str = "crowdin-fml";
@@ -161,8 +161,7 @@ pub async fn clone_repository(
     installation_id: InstallationId,
 ) -> RepositoryDirectory {
     info!("[{}] clone repository", repo_info.full_name);
-    use tempfile::TempDir;
-    let directory = TempDir::with_prefix("FML.").unwrap();
+    let directory = create_temporary_directory();
     clone_repository_to(repo_info, installation_id, directory.path()).await;
     RepositoryDirectory::new(&repo_info.full_name, directory)
 }

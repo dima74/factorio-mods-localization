@@ -32,19 +32,30 @@ pub async fn download_and_extract_zip_file(url: &str) -> TempDir {
 
     let file = download_file(url).await;
     let mut zip = ZipArchive::new(file).unwrap();
-    let directory = TempDir::with_prefix("FML.").unwrap();
+    let directory = create_temporary_directory();
     zip.extract(&directory).unwrap();
     directory
 }
 
 pub async fn download_file(url: &str) -> File {
-    let file = tempfile::tempfile().unwrap();
+    let file = create_temporary_file();
     let mut file = tokio::fs::File::from_std(file);
     let response = reqwest::get(url)
         .await.unwrap()
         .bytes().await.unwrap();
     tokio::io::copy(&mut &*response, &mut file).await.unwrap();
     file.into_std().await
+}
+
+// See [create_temporary_directory]
+fn create_temporary_file() -> File {
+    tempfile::tempfile_in("./").unwrap()
+}
+
+// Temporary files/directories should NOT be created inside /tmp,
+// because /tmp is mounted inside RAM (tmpfs)
+pub fn create_temporary_directory() -> TempDir {
+    TempDir::with_prefix_in("FML.", "./").unwrap()
 }
 
 pub fn remove_empty_ini_files(root: &Path) {
