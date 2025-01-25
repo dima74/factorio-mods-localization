@@ -176,6 +176,8 @@ fn get_all_changed_files(event: &PushWebhookEventPayload) -> impl Iterator<Item=
 // so they will be displayed at https://github.com/factorio-mods-helper.
 // Previously it was enough to star repository, but it was changed somewhere in 2023-2024.
 // https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-profile/managing-contribution-settings-on-your-profile/why-are-my-contributions-not-showing-up-on-my-profile
+//
+// Note that it will not work (commits will not be shown), if mod repository is a fork.
 async fn star_and_fork_repository(repository: &str) {
     let api_personal = github::as_personal_account();
     github::star_repository(&api_personal, repository).await;

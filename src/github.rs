@@ -246,7 +246,7 @@ pub async fn fork_repository(personal_api: &Octocrab, full_name: &str) -> bool {
 
 pub async fn fork_repository_without_check(personal_api: &Octocrab, full_name: &str) {
     let (owner, repo) = full_name.split_once('/').unwrap();
-    info!("[update-github-from-crowdin] [{}] forking repository...", full_name);
+    info!("[{}] forking repository...", full_name);
     personal_api
         .repos(owner, repo)
         .create_fork()
