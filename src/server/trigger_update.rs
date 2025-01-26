@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::fs;
+use std::ops::Deref;
 use std::path::Path;
 use std::sync::LazyLock;
 use std::time::Duration;
@@ -16,6 +17,14 @@ use crate::github::{as_personal_account, get_repo_info};
 use crate::github_repo_info::{GithubModName, GithubRepoInfo};
 use crate::mod_directory::ModDirectory;
 use crate::server::check_secret;
+
+const TRIGGER_UPDATE_IGNORED_REPOSITORIES: &[&str] = &[
+    // TODO:
+    //  Large repository, causes OOM for some reason
+    //  https://github.com/dima74/factorio-mods-localization/issues/25
+    "robot256/cargo_ships",
+    "jingleheimer-schmidt/status_bars",
+];
 
 #[get("/triggerUpdate?<repo>&<subpath>&<secret>")]
 pub async fn trigger_update(
@@ -106,10 +115,18 @@ fn filter_repositories_for_update_all(
 ) -> Vec<(GithubRepoInfo, InstallationId)> {
     repositories
         .retain(|(repo_info, _)| {
+            if TRIGGER_UPDATE_IGNORED_REPOSITORIES.contains(&repo_info.full_name.deref()) {
+                info!(
+                    "[update-github-from-crowdin] [{}] skipping update (ignored)",
+                    repo_info.full_name
+                );
+                return false;
+            };
+
             let weekly_update_from_crowdin = repo_info.weekly_update_from_crowdin;
             if !weekly_update_from_crowdin {
                 info!(
-                    "[update-github-from-crowdin] [{}] skipping update because weekly_update_from_crowdin=false", 
+                    "[update-github-from-crowdin] [{}] skipping update because weekly_update_from_crowdin=false",
                     repo_info.full_name
                 );
             }
@@ -124,6 +141,8 @@ async fn push_crowdin_changes_to_repositories(repositories: Vec<(GithubRepoInfo,
     let translations_directory = crowdin::download_all_translations().await;
     for (repo_info, installation_id) in repositories {
         push_crowdin_changes_to_repository(repo_info, installation_id, &translations_directory).await;
+        // TODO: https://github.com/dima74/factorio-mods-localization/issues/25
+        sleep(Duration::from_secs(30)).await;
     }
 }
 
@@ -178,7 +197,7 @@ async fn move_translated_files_to_mod_directory(mod_directory: &ModDirectory, tr
     delete_unmatched_localization_files(mod_directory);
     for (language_path, language) in util::read_dir(translation_directory) {
         if !language_is_enabled_for_mod_on_crowdin(&mod_directory.github_name, &language) { continue; }
-        
+
         let language_path_crowdin = language_path.join(get_crowdin_directory_name(&mod_directory.github_name));
         assert!(language_path_crowdin.exists());
         let files = util::read_dir(&language_path_crowdin).collect::<Vec<_>>();
@@ -226,6 +245,6 @@ fn language_is_enabled_for_mod_on_crowdin(github_name: &GithubModName, language:
     if github_name.owner == "PennyJim" && github_name.repo == "pirate-locale" {
         return language == "fr";
     }
-    
+
     true
 }
