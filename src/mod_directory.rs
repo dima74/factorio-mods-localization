@@ -4,7 +4,7 @@ use log::error;
 use tempfile::TempDir;
 
 use crate::{crowdin, util};
-use crate::github_repo_info::GithubModName;
+use crate::github_repo_info::GithubModInfo;
 use crate::sentry::sentry_report_error;
 
 pub type LanguageCode = String;
@@ -28,17 +28,17 @@ impl RepositoryDirectory {
 /// Represents local directory containing factorio mod
 pub struct ModDirectory {
     pub root: PathBuf,
-    pub github_name: GithubModName,
+    pub mod_info: GithubModInfo,
 }
 
 impl ModDirectory {
-    pub fn new(repository_directory: &RepositoryDirectory, github_name: GithubModName) -> Self {
+    pub fn new(repository_directory: &RepositoryDirectory, mod_info: GithubModInfo) -> Self {
         let repository_root = repository_directory.root.path();
-        let root = match &github_name.subpath {
+        let root = match &mod_info.subpath {
             None => repository_root.to_owned(),
             Some(subpath) => repository_root.join(subpath).to_owned(),
         };
-        Self { root, github_name }
+        Self { root, mod_info }
     }
 
     pub fn locale_path(&self) -> PathBuf {
@@ -66,7 +66,7 @@ impl ModDirectory {
                 if !english_file.exists() {
                     let message = format!(
                         "[add-repository] [{}] matched english file not found for '{}/{}'",
-                        self.github_name,
+                        self.mod_info,
                         language_code,
                         file_name
                     );

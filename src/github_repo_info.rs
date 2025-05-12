@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::crowdin::get_crowdin_directory_name;
 
 /// `factorio-mods-localization.json` - config file in root of the repository.
-/// It should be in the *default* branch, even if some other "branch" is specified in config. 
+/// It should be in the *default* branch, even if some other "branch" is specified in config.
 ///
 /// ```json
 /// {
@@ -15,10 +15,14 @@ use crate::crowdin::get_crowdin_directory_name;
 ///   "branch": "dev"
 /// }
 /// ```
+/// 
+/// One [`GithubRepoInfo`] can contain multiple [`GithubModInfo`].
+/// [`GithubRepoInfo`] corresponds 1-1 to github repository.
+/// [`GithubModInfo`] corresponds 1-1 to directory on crowdin.
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct GithubRepoInfo {
     pub full_name: String,
-    pub mods: Vec<GithubModName>,
+    pub mods: Vec<GithubModInfo>,
     pub weekly_update_from_crowdin: bool,
     /// Branch from which english files will be tracked and to which translations will be pushed
     pub branch: Option<String>,
@@ -27,7 +31,7 @@ pub struct GithubRepoInfo {
 impl GithubRepoInfo {
     fn new(
         full_name: &str,
-        mods: Vec<GithubModName>,
+        mods: Vec<GithubModInfo>,
         weekly_update_from_crowdin: Option<bool>,
         branch: Option<String>,
     ) -> Self {
@@ -41,7 +45,7 @@ impl GithubRepoInfo {
 
     pub fn new_from_config(
         full_name: &str,
-        mods: Vec<GithubModName>,
+        mods: Vec<GithubModInfo>,
         weekly_update_from_crowdin: Option<bool>,
         branch: Option<String>,
     ) -> Option<Self> {
@@ -50,13 +54,13 @@ impl GithubRepoInfo {
     }
 
     pub fn new_single_mod(full_name: &str) -> Self {
-        let mods = vec![GithubModName::new(full_name, None)];
+        let mods = vec![GithubModInfo::new(full_name, None)];
         Self::new(full_name, mods, None, None)
     }
 
     // for debug routes
     pub fn new_one_mod_with_subpath(full_name: &str, subpath: String) -> Self {
-        let mods = vec![GithubModName::new(full_name, Some(subpath))];
+        let mods = vec![GithubModInfo::new(full_name, Some(subpath))];
         Self::new(full_name, mods, None, None)
     }
 
@@ -83,13 +87,13 @@ impl GithubRepoInfo {
 /// │   ├── locale/en
 ///
 #[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct GithubModName {
+pub struct GithubModInfo {
     pub owner: String,
     pub repo: String,
     pub subpath: Option<String>,
 }
 
-impl fmt::Display for GithubModName {
+impl fmt::Display for GithubModInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.subpath {
             None => write!(f, "{}/{}", self.owner, self.repo),
@@ -98,7 +102,7 @@ impl fmt::Display for GithubModName {
     }
 }
 
-impl GithubModName {
+impl GithubModInfo {
     pub fn new(full_name: &str, subpath: Option<String>) -> Self {
         let (owner, repo) = full_name.split_once('/').unwrap();
         Self {
@@ -141,7 +145,7 @@ pub fn parse_github_repo_info_json(full_name: &str, json: &str) -> Option<Github
     let mods = match data.mods {
         None => {
             // { "weekly_update_from_crowdin": false }
-            vec![GithubModName::new(full_name, None)]
+            vec![GithubModInfo::new(full_name, None)]
         }
         Some(mods) => {
             mods
@@ -149,7 +153,7 @@ pub fn parse_github_repo_info_json(full_name: &str, json: &str) -> Option<Github
                 .map(|name| {
                     // only direct subdirectories are supported
                     assert!(!name.is_empty() && !name.starts_with('.') && !name.contains('/'));
-                    GithubModName::new(full_name, Some(name))
+                    GithubModInfo::new(full_name, Some(name))
                 })
                 .collect()
         }
@@ -168,12 +172,12 @@ mod tests {
             Some(GithubRepoInfo {
                 full_name: "owner/repo".to_owned(),
                 mods: vec![
-                    GithubModName {
+                    GithubModInfo {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: Some("mod1".to_owned()),
                     },
-                    GithubModName {
+                    GithubModInfo {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: Some("mod2".to_owned()),
@@ -189,12 +193,12 @@ mod tests {
                 full_name: "owner/repo".to_owned(),
                 mods:
                 vec![
-                    GithubModName {
+                    GithubModInfo {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: Some("mod1".to_owned()),
                     },
-                    GithubModName {
+                    GithubModInfo {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: Some("mod2".to_owned()),
@@ -213,7 +217,7 @@ mod tests {
             Some(GithubRepoInfo {
                 full_name: "owner/repo".to_owned(),
                 mods: vec![
-                    GithubModName {
+                    GithubModInfo {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: None,
@@ -228,7 +232,7 @@ mod tests {
             Some(GithubRepoInfo {
                 full_name: "owner/repo".to_owned(),
                 mods: vec![
-                    GithubModName {
+                    GithubModInfo {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: None,
@@ -247,7 +251,7 @@ mod tests {
             Some(GithubRepoInfo {
                 full_name: "owner/repo".to_owned(),
                 mods: vec![
-                    GithubModName {
+                    GithubModInfo {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: None,
@@ -273,12 +277,12 @@ mod tests {
             Some(GithubRepoInfo {
                 full_name: "owner/repo".to_owned(),
                 mods: vec![
-                    GithubModName {
+                    GithubModInfo {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: Some("mod1".to_owned()),
                     },
-                    GithubModName {
+                    GithubModInfo {
                         owner: "owner".to_owned(),
                         repo: "repo".to_owned(),
                         subpath: Some("mod2".to_owned()),

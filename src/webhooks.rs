@@ -147,7 +147,7 @@ async fn handle_push_event_for_mod(mod_directory: ModDirectory) -> bool {
 
     let (crowdin_directory, created) = CrowdinDirectory::get_or_create(mod_directory).await;
     if created {
-        info!("[push-webhook] [{}] created directory on crowdin - performing full import", crowdin_directory.mod_directory.github_name);
+        info!("[push-webhook] [{}] created directory on crowdin - performing full import", crowdin_directory.mod_directory.mod_info);
         crowdin_directory.add_english_and_localization_files().await;
     } else {
         crowdin_directory.add_english_files().await;

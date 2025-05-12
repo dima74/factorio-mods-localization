@@ -4,7 +4,7 @@ use octocrab::Octocrab;
 
 use fml::{crowdin, github};
 use fml::crowdin::get_crowdin_directory_name;
-use fml::github_repo_info::GithubModName;
+use fml::github_repo_info::GithubModInfo;
 
 #[tokio::test]
 async fn main() {
@@ -65,10 +65,10 @@ async fn get_github_data() -> HashMap<String, HashSet<String>> {
 
 async fn list_locale_en_files_for_mod(
     full_name: &str,
-    mod_: &GithubModName,
+    mod_info: &GithubModInfo,
     installation_api: &Octocrab,
 ) -> Option<HashSet<String>> {
-    let path = match mod_.subpath {
+    let path = match mod_info.subpath {
         None => "locale/en".to_owned(),
         Some(ref subpath) => format!("{}/locale/en", subpath),
     };

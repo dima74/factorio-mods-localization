@@ -14,7 +14,7 @@ use tokio::time::sleep;
 use crate::{crowdin, git_util, github, util};
 use crate::crowdin::{get_crowdin_directory_name, normalize_language_code, replace_ini_to_cfg};
 use crate::github::{as_personal_account, get_repo_info};
-use crate::github_repo_info::{GithubModName, GithubRepoInfo};
+use crate::github_repo_info::{GithubModInfo, GithubRepoInfo};
 use crate::mod_directory::ModDirectory;
 use crate::server::check_secret;
 
@@ -196,9 +196,9 @@ async fn push_changes_using_pull_request(path: &Path, full_name: &str, base_bran
 async fn move_translated_files_to_mod_directory(mod_directory: &ModDirectory, translation_directory: &Path) {
     delete_unmatched_localization_files(mod_directory);
     for (language_path, language) in util::read_dir(translation_directory) {
-        if !language_is_enabled_for_mod_on_crowdin(&mod_directory.github_name, &language) { continue; }
+        if !language_is_enabled_for_mod_on_crowdin(&mod_directory.mod_info, &language) { continue; }
 
-        let language_path_crowdin = language_path.join(get_crowdin_directory_name(&mod_directory.github_name));
+        let language_path_crowdin = language_path.join(get_crowdin_directory_name(&mod_directory.mod_info));
         assert!(language_path_crowdin.exists());
         let files = util::read_dir(&language_path_crowdin).collect::<Vec<_>>();
         if files.is_empty() { continue; }
@@ -240,9 +240,9 @@ fn delete_unmatched_localization_files(mod_directory: &ModDirectory) {
     }
 }
 
-fn language_is_enabled_for_mod_on_crowdin(github_name: &GithubModName, language: &str) -> bool {
+fn language_is_enabled_for_mod_on_crowdin(mod_info: &GithubModInfo, language: &str) -> bool {
     // This is a hack for this specific use case. See #19
-    if github_name.owner == "PennyJim" && github_name.repo == "pirate-locale" {
+    if mod_info.owner == "PennyJim" && mod_info.repo == "pirate-locale" {
         return language == "fr";
     }
 

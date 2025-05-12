@@ -339,7 +339,7 @@ pub async fn get_current_user(api_oauth: &Octocrab) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::github_repo_info::GithubModName;
+    use crate::github_repo_info::GithubModInfo;
 
     use super::*;
 
@@ -350,7 +350,7 @@ mod tests {
             get_repo_info(&api, "dima74/factorio-mod-example").await,
             Some(GithubRepoInfo {
                 full_name: "dima74/factorio-mod-example".to_owned(),
-                mods: vec![GithubModName::new("dima74/factorio-mod-example", None)],
+                mods: vec![GithubModInfo::new("dima74/factorio-mod-example", None)],
                 weekly_update_from_crowdin: true,
                 branch: None,
             }),
@@ -360,8 +360,8 @@ mod tests {
             Some(GithubRepoInfo {
                 full_name: "dima74/factorio-multimod-example".to_owned(),
                 mods: vec![
-                    GithubModName::new("dima74/factorio-multimod-example", Some("Mod1".to_owned())),
-                    GithubModName::new("dima74/factorio-multimod-example", Some("Mod2".to_owned())),
+                    GithubModInfo::new("dima74/factorio-multimod-example", Some("Mod1".to_owned())),
+                    GithubModInfo::new("dima74/factorio-multimod-example", Some("Mod2".to_owned())),
                 ],
                 weekly_update_from_crowdin: true,
                 branch: None,

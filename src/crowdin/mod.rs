@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use tempfile::TempDir;
 
 use crate::crowdin::http::{crowdin_get_empty_query, crowdin_get_pagination, crowdin_get_pagination_empty_query, crowdin_post, crowdin_put, DataWrapper, IdResponse, UnitResponse, upload_file_to_storage};
-use crate::github_repo_info::{GithubModName, GithubRepoInfo};
+use crate::github_repo_info::{GithubModInfo, GithubRepoInfo};
 use crate::mod_directory::{LanguageCode, ModDirectory};
 use crate::myenv::is_development;
 use crate::util;
@@ -211,7 +211,7 @@ pub struct CrowdinDirectory {
 
 impl CrowdinDirectory {
     pub async fn get_or_create(mod_directory: ModDirectory) -> (CrowdinDirectory, bool) {
-        let crowdin_name = get_crowdin_directory_name(&mod_directory.github_name);
+        let crowdin_name = get_crowdin_directory_name(&mod_directory.mod_info);
         let (crowdin_id, created) = match find_directory_id(&crowdin_name).await {
             Some(crowdin_id) => (crowdin_id, false),
             None => (create_directory(&crowdin_name).await, true),
@@ -220,7 +220,7 @@ impl CrowdinDirectory {
     }
 
     pub async fn has_existing(mod_directory: &ModDirectory) -> bool {
-        let crowdin_name = get_crowdin_directory_name(&mod_directory.github_name);
+        let crowdin_name = get_crowdin_directory_name(&mod_directory.mod_info);
         find_directory_id(&crowdin_name).await.is_some()
     }
 
@@ -289,7 +289,7 @@ impl CrowdinDirectory {
     }
 
     async fn upload_file_to_storage(&self, file: &Path, file_name: &str) -> StorageId {
-        info!("[{}] upload file to storage: {}/{}", self.mod_directory.github_name, util::file_name(file.parent().unwrap()), file_name);
+        info!("[{}] upload file to storage: {}/{}", self.mod_directory.mod_info, util::file_name(file.parent().unwrap()), file_name);
         let file_content = fs::read_to_string(file).unwrap();
         let mut file_content = util::escape::escape_strings_in_ini_file(&file_content);
         if file_content.is_empty() {
@@ -317,15 +317,15 @@ pub fn is_correct_language_code(code: &str) -> bool {
     codes.iter().any(|it| it == code)
 }
 
-pub fn get_crowdin_directory_name(github_name: &GithubModName) -> String {
+pub fn get_crowdin_directory_name(mod_info: &GithubModInfo) -> String {
     use util::case::to_title_case;
-    let repo = to_title_case(&github_name.repo);
-    match &github_name.subpath {
+    let repo = to_title_case(&mod_info.repo);
+    match &mod_info.subpath {
         None => {
-            format!("{} ({})", repo, github_name.owner)
+            format!("{} ({})", repo, mod_info.owner)
         }
         Some(subpath) => {
-            format!("{} - {} ({})", repo, to_title_case(subpath), github_name.owner)
+            format!("{} - {} ({})", repo, to_title_case(subpath), mod_info.owner)
         }
     }
 }
