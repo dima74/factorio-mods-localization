@@ -88,15 +88,17 @@ pub async fn get_installation_id_and_repo_info(
         None => return Err("Can't find installation for repository"),
     };
 
-    let repo_info = if let Some(subpath) = subpath {
-        GithubRepoInfo::new_one_mod_with_subpath(full_name, subpath)
-    } else {
-        let api = github::as_installation(installation_id);
-        match get_repo_info(&api, full_name).await {
-            None => return Err("No mods."),
-            Some(repo_info) => repo_info,
-        }
+    let api = github::as_installation(installation_id);
+    let mut repo_info = match get_repo_info(&api, full_name).await {
+        None => return Err("No mods."),
+        Some(repo_info) => repo_info,
     };
+    if let Some(subpath) = subpath {
+        if !repo_info.keep_single_mod_with_crowdin_name(&subpath) {
+            return Err("Can't find mod with provided subpath");
+        }
+    }
+
     Ok((installation_id, repo_info))
 }
 
@@ -203,7 +205,7 @@ async fn move_translated_files_to_mod_directory(mod_directory: &ModDirectory, tr
         let files = util::read_dir(&language_path_crowdin).collect::<Vec<_>>();
         if files.is_empty() { continue; }
 
-        let language_original = util::read_dir(&mod_directory.locale_path())
+        let language_original = util::read_dir(mod_directory.locale_path())
             .map(|(_path, name)| name)
             .find(|it| normalize_language_code(it) == language)
             .unwrap_or(language);

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use log::error;
 use tempfile::TempDir;
@@ -27,26 +27,23 @@ impl RepositoryDirectory {
 
 /// Represents local directory containing factorio mod
 pub struct ModDirectory {
-    pub root: PathBuf,
+    pub locale_path: PathBuf,
     pub mod_info: GithubModInfo,
 }
 
 impl ModDirectory {
     pub fn new(repository_directory: &RepositoryDirectory, mod_info: GithubModInfo) -> Self {
         let repository_root = repository_directory.root.path();
-        let root = match &mod_info.subpath {
-            None => repository_root.to_owned(),
-            Some(subpath) => repository_root.join(subpath).to_owned(),
-        };
-        Self { root, mod_info }
+        let locale_path = repository_root.join(&mod_info.locale_path).to_owned();
+        Self { locale_path, mod_info }
     }
 
-    pub fn locale_path(&self) -> PathBuf {
-        self.root.join("locale")
+    pub fn locale_path(&self) -> &Path {
+        &self.locale_path
     }
 
     pub fn locale_en_path(&self) -> PathBuf {
-        self.root.join("locale/en")
+        self.locale_path.join("en")
     }
 
     pub fn check_structure(&self) -> bool {
@@ -98,7 +95,7 @@ impl ModDirectory {
     }
 
     fn get_language_directories(&self) -> Vec<(LanguageCode, PathBuf)> {
-        util::read_dir(&self.locale_path())
+        util::read_dir(self.locale_path())
             .filter(|(path, _name)| path.is_dir())
             .map(|(path, name)| (crowdin::normalize_language_code(&name), path))
             .filter(|(code, _path)| crowdin::is_correct_language_code(code))

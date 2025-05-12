@@ -68,10 +68,7 @@ async fn list_locale_en_files_for_mod(
     mod_info: &GithubModInfo,
     installation_api: &Octocrab,
 ) -> Option<HashSet<String>> {
-    let path = match mod_info.subpath {
-        None => "locale/en".to_owned(),
-        Some(ref subpath) => format!("{}/locale/en", subpath),
-    };
+    let path = format!("{}/en", mod_info.locale_path);
     let files = github::list_files_in_directory(installation_api, full_name, &path).await.ok()?;
     let files = files
         .into_iter()

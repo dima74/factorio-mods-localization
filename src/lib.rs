@@ -13,6 +13,7 @@ pub mod server;
 pub mod util;
 pub mod webhooks;
 pub mod github_repo_info;
+pub mod github_config;
 
 pub fn init() {
     dotenv::dotenv().ok();

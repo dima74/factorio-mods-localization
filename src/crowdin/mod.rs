@@ -320,12 +320,12 @@ pub fn is_correct_language_code(code: &str) -> bool {
 pub fn get_crowdin_directory_name(mod_info: &GithubModInfo) -> String {
     use util::case::to_title_case;
     let repo = to_title_case(&mod_info.repo);
-    match &mod_info.subpath {
+    match &mod_info.crowdin_name {
         None => {
             format!("{} ({})", repo, mod_info.owner)
         }
-        Some(subpath) => {
-            format!("{} - {} ({})", repo, to_title_case(subpath), mod_info.owner)
+        Some(crowdin_name) => {
+            format!("{} - {} ({})", repo, to_title_case(crowdin_name), mod_info.owner)
         }
     }
 }

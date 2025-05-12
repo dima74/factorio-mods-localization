@@ -13,7 +13,8 @@ use serde::de::DeserializeOwned;
 use tokio::time::sleep;
 
 use crate::git_util;
-use crate::github_repo_info::{GithubRepoInfo, parse_github_repo_info_json};
+use crate::github_config::parse_github_repo_info_json;
+use crate::github_repo_info::{GithubRepoInfo};
 use crate::mod_directory::RepositoryDirectory;
 use crate::myenv::{GITHUB_APP_ID, GITHUB_APP_PRIVATE_KEY, GITHUB_PERSONAL_ACCESS_TOKEN};
 use crate::sentry::sentry_report_error;
@@ -350,7 +351,7 @@ mod tests {
             get_repo_info(&api, "dima74/factorio-mod-example").await,
             Some(GithubRepoInfo {
                 full_name: "dima74/factorio-mod-example".to_owned(),
-                mods: vec![GithubModInfo::new("dima74/factorio-mod-example", None)],
+                mods: vec![GithubModInfo::new_root("dima74/factorio-mod-example")],
                 weekly_update_from_crowdin: true,
                 branch: None,
             }),
@@ -360,8 +361,8 @@ mod tests {
             Some(GithubRepoInfo {
                 full_name: "dima74/factorio-multimod-example".to_owned(),
                 mods: vec![
-                    GithubModInfo::new("dima74/factorio-multimod-example", Some("Mod1".to_owned())),
-                    GithubModInfo::new("dima74/factorio-multimod-example", Some("Mod2".to_owned())),
+                    GithubModInfo::new_custom("dima74/factorio-multimod-example", None, "Mod1".to_owned()).unwrap(),
+                    GithubModInfo::new_custom("dima74/factorio-multimod-example", None, "Mod2".to_owned()).unwrap(),
                 ],
                 weekly_update_from_crowdin: true,
                 branch: None,
