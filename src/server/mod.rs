@@ -49,6 +49,7 @@ pub async fn main() {
         debug_routes::list_repositories,
         debug_routes::list_repositories_for_user,
         debug_routes::list_users,
+        debug_routes::trigger_oom,
         example_error_routes::error1,
         example_error_routes::error2,
     ];

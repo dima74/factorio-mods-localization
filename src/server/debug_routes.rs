@@ -79,3 +79,15 @@ pub async fn import_english(
     webhooks::import_english(repo_info, installation_id).await;
     "Ok."
 }
+
+#[get("/triggerOOM?<secret>")]
+pub async fn trigger_oom(secret: Option<String>) -> &'static str {
+    if !check_secret(secret) { return "Missing secret"; }
+    let _lock = get_trigger_update_mutex().await;
+
+    eprintln!("\nTrying to trigger OOM...");
+    let mut v = Vec::new();
+    loop {
+        v.push(v.len());
+    }
+}
