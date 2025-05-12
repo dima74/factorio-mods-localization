@@ -1,3 +1,6 @@
+//! Checks that all GitHub english files are present on Crowdin,
+//! And that there are no extra english files on Crowdin.
+
 use std::collections::{HashMap, HashSet};
 
 use octocrab::Octocrab;

@@ -1,3 +1,7 @@
+//! Starring previously was needed for displaying contributions.
+//! However it is not working anymore (forking is needed instead).
+//! So we keep star check just so.
+
 use fml::github;
 
 #[tokio::test]

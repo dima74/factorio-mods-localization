@@ -1,3 +1,6 @@
+//! Without forking contributions will not be displayed for
+//! https://github.com/factorio-mods-helper
+
 use fml::github;
 
 #[tokio::test]

@@ -1,5 +1,8 @@
-/// Creates directories `temp/compare/english-crowdin` and `temp/compare/english-github`.
-/// After you should manually execute `diff -r` on them.
+//! Creates two directories:
+//! * `temp/compare/english-crowdin`
+//! * `temp/compare/english-github`
+//! 
+//! After you should manually execute `diff -r` on them.
 
 use std::{fs, io};
 use std::fs::File;

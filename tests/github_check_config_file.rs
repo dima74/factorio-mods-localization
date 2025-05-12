@@ -1,3 +1,6 @@
+//! Checks `factorio-mods-localization.json` config file.
+//! Repository either should not have it, or have it correct.
+
 use fml::github;
 use fml::github::{get_all_installations, get_all_repositories_of_installation, get_repo_info, GetRepoInfoError};
 

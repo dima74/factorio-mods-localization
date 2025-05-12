@@ -1,3 +1,6 @@
+//! Checks that all GitHub repositories are present on Crowdin,
+//! And that there are no extra directories on Crowdin.
+
 use std::collections::HashSet;
 
 use fml::{crowdin, github};

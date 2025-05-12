@@ -1,3 +1,5 @@
+//! Newlines in translations will break .cfg file format
+
 use std::fs;
 
 use fml::crowdin;
