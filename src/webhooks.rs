@@ -74,7 +74,7 @@ async fn on_repositories_added(repositories: Vec<InstallationEventRepository>, i
         .collect::<Vec<_>>();
     let api = github::as_installation(installation_id);
     for repository in repositories {
-        let Some(repo_info) = github::get_repo_info(&api, &repository).await else {
+        let Ok(repo_info) = github::get_repo_info(&api, &repository).await else {
             continue;
         };
         on_repository_added(repo_info, installation_id).await;
@@ -120,7 +120,7 @@ pub async fn on_push_event(
     };
 
     let api = github::as_installation(installation_id);
-    let Some(repo_info) = github::get_repo_info(&api, &full_name).await else {
+    let Ok(repo_info) = github::get_repo_info(&api, &full_name).await else {
         info!("[push-webhook] [{}] no mods found", full_name);
         return;
     };

@@ -66,22 +66,35 @@ pub async fn get_installation_id_for_repo(full_name: &str) -> Option<Installatio
         .ok()
 }
 
-pub async fn get_repo_info(installation_api: &Octocrab, full_name: &str) -> Option<GithubRepoInfo> {
+#[derive(Debug, Eq, PartialEq)]
+pub enum GetRepoInfoError {
+    InvalidConfig,
+    LocaleDirectoryMissing,
+    LocaleEnDirectoryMissingOrEmpty,
+}
+
+pub async fn get_repo_info(
+    installation_api: &Octocrab,
+    full_name: &str,
+) -> Result<GithubRepoInfo, GetRepoInfoError> {
     let root_items = list_files_in_directory(installation_api, full_name, "").await.unwrap();
     if root_items.iter().any(|it| it == GITHUB_CONFIG_FILE_NAME) {
         let mods_file = get_content(installation_api, full_name, GITHUB_CONFIG_FILE_NAME).await.unwrap();
         let json = mods_file.items[0].decoded_content().unwrap();
         parse_github_repo_info_json(full_name, &json)
+            .ok_or(GetRepoInfoError::InvalidConfig)
     } else {
         if !root_items.iter().any(|it| it == "locale") {
-            return None;
+            return Err(GetRepoInfoError::LocaleDirectoryMissing);
         }
         let locale_en_items = list_files_in_directory(installation_api, full_name, "locale/en").await;
         match locale_en_items {
             Ok(locale_en_items) if !locale_en_items.is_empty() => {
-                Some(GithubRepoInfo::new_single_mod(full_name))
+                Ok(GithubRepoInfo::new_single_mod(full_name))
             }
-            _ => None,
+            _ => { 
+                Err(GetRepoInfoError::LocaleEnDirectoryMissingOrEmpty) 
+            }
         }
     }
 }
@@ -137,7 +150,7 @@ pub async fn get_all_repositories(api: &Octocrab) -> Vec<(GithubRepoInfo, Instal
         let repositories = get_all_repositories_of_installation(&installation_api).await;
         for repository in repositories {
             let repo_info = get_repo_info(&installation_api, &repository).await;
-            if let Some(repo_info) = repo_info {
+            if let Ok(repo_info) = repo_info {
                 result.push((repo_info, installation.id));
             }
         }
@@ -349,7 +362,7 @@ mod tests {
         let api = as_installation_for_user("dima74").await.unwrap();
         assert_eq!(
             get_repo_info(&api, "dima74/factorio-mod-example").await,
-            Some(GithubRepoInfo {
+            Ok(GithubRepoInfo {
                 full_name: "dima74/factorio-mod-example".to_owned(),
                 mods: vec![GithubModInfo::new_root("dima74/factorio-mod-example")],
                 weekly_update_from_crowdin: true,
@@ -358,7 +371,7 @@ mod tests {
         );
         assert_eq!(
             get_repo_info(&api, "dima74/factorio-multimod-example").await,
-            Some(GithubRepoInfo {
+            Ok(GithubRepoInfo {
                 full_name: "dima74/factorio-multimod-example".to_owned(),
                 mods: vec![
                     GithubModInfo::new_custom("dima74/factorio-multimod-example", None, "Mod1".to_owned()).unwrap(),
@@ -370,7 +383,7 @@ mod tests {
         );
         assert_eq!(
             get_repo_info(&api, "dima74/factorio-mods-localization").await,
-            None,
+            Err(GetRepoInfoError::LocaleDirectoryMissing),
         );
     }
 }

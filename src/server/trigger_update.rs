@@ -90,8 +90,8 @@ pub async fn get_installation_id_and_repo_info(
 
     let api = github::as_installation(installation_id);
     let mut repo_info = match get_repo_info(&api, full_name).await {
-        None => return Err("No mods."),
-        Some(repo_info) => repo_info,
+        Err(_) => return Err("No mods."),
+        Ok(repo_info) => repo_info,
     };
     if let Some(subpath) = subpath {
         if !repo_info.keep_single_mod_with_crowdin_name(&subpath) {
