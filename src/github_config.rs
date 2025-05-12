@@ -53,15 +53,15 @@ struct Config {
 #[serde(untagged)]
 enum ConfigMods {
     Short(Vec<String>),
-    // Full(Vec<ConfigMod>),
+    Full(Vec<ConfigMod>),
 }
 
-// #[derive(Deserialize)]
-// #[serde(rename_all = "camelCase")]
-// struct ConfigMod {
-//     locale_path: String,
-//     crowdin_name: String,
-// }
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ConfigMod {
+    locale_path: String,
+    crowdin_name: String,
+}
 
 #[derive(Deserialize)]
 struct ConfigOld(Vec<String>);
@@ -106,14 +106,14 @@ fn convert_mods(
                 .map(|name| GithubModInfo::new_custom(full_name, None, name))
                 .collect()
         }
-        // ConfigMods::Full(mods) => {
-        //     mods
-        //         .into_iter()
-        //         .map(|mod_| {
-        //             GithubModInfo::new_custom(full_name, Some(mod_.locale_path), mod_.crowdin_name)
-        //         })
-        //         .collect()
-        // }
+        ConfigMods::Full(mods) => {
+            mods
+                .into_iter()
+                .map(|mod_| {
+                    GithubModInfo::new_custom(full_name, Some(mod_.locale_path), mod_.crowdin_name)
+                })
+                .collect()
+        }
     }
 }
 
@@ -182,26 +182,26 @@ mod tests {
         );
     }
 
-    // #[test]
-    // fn test_parse_mods_long_version() {
-    //     assert_eq!(
-    //         parse_github_repo_info_json("owner/repo", r#"{"mods": [{"localePath": "custom/path", "crowdinName": "Foo"}]}"#),
-    //         Some(GithubRepoInfo {
-    //             full_name: "owner/repo".to_owned(),
-    //             mods:
-    //             vec![
-    //                 GithubModInfo {
-    //                     owner: "owner".to_owned(),
-    //                     repo: "repo".to_owned(),
-    //                     locale_path: "custom/path".to_owned(),
-    //                     crowdin_name: Some("Foo".to_owned()),
-    //                 },
-    //             ],
-    //             weekly_update_from_crowdin: true,
-    //             branch: None,
-    //         })
-    //     )
-    // }
+    #[test]
+    fn test_parse_mods_long_version() {
+        assert_eq!(
+            parse_github_repo_info_json("owner/repo", r#"{"mods": [{"localePath": "custom/path", "crowdinName": "Foo"}]}"#),
+            Some(GithubRepoInfo {
+                full_name: "owner/repo".to_owned(),
+                mods:
+                vec![
+                    GithubModInfo {
+                        owner: "owner".to_owned(),
+                        repo: "repo".to_owned(),
+                        locale_path: "custom/path".to_owned(),
+                        crowdin_name: Some("Foo".to_owned()),
+                    },
+                ],
+                weekly_update_from_crowdin: true,
+                branch: None,
+            })
+        )
+    }
 
     #[test]
     fn test_parse_weekly_update_from_crowdin() {
