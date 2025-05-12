@@ -1,9 +1,7 @@
-#![feature(lazy_cell)]
-
-/// General overview of the process:
-/// 1. GitHub app installed - [webhooks::on_repositories_added]
-/// 2. English files updated on GitHub - [webhooks::on_push_event]
-/// 3. Weekly update from Crowdin to GitHub - [server::trigger_update::push_all_crowdin_changes_to_github]
+//! General overview of the process:
+//! 1. GitHub app installed - [webhooks::on_repositories_added]
+//! 2. English files updated on GitHub - [webhooks::on_push_event]
+//! 3. Weekly update from Crowdin to GitHub - [server::trigger_update::push_all_crowdin_changes_to_github]
 
 pub mod crowdin;
 pub mod git_util;

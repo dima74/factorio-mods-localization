@@ -1,7 +1,7 @@
 use std::ops::Deref;
 use std::sync::LazyLock;
 
-#[derive(Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 enum Environment {
     /// Env not checked
     Development,

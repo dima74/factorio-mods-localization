@@ -41,7 +41,7 @@ pub fn commit(path: &Path) {
         "-c", &format!("user.email='{}'", email),
         "-c", "commit.gpgsign=false",
         "commit",
-        "-m", &message
+        "-m", message
     ];
     execute_git_command(path, args, true);
 }

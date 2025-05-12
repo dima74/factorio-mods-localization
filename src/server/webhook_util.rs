@@ -29,7 +29,7 @@ impl<'r> FromData<'r> for GithubEvent {
 
 impl GithubEvent {
     // https://docs.github.com/en/webhooks/webhook-events-and-payloads#delivery-headers
-    async fn from_data_impl<'r>(request: &Request<'_>, data: Data<'r>) -> Result<Self, Box<dyn Error>> {
+    async fn from_data_impl(request: &Request<'_>, data: Data<'_>) -> Result<Self, Box<dyn Error>> {
         // Parse the event type
         let event_type = request.headers()
             .get_one("X-Github-Event")
