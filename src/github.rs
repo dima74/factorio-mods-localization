@@ -374,8 +374,18 @@ mod tests {
             Ok(GithubRepoInfo {
                 full_name: "dima74/factorio-multimod-example".to_owned(),
                 mods: vec![
-                    GithubModInfo::new_custom("dima74/factorio-multimod-example", None, "Mod1".to_owned()).unwrap(),
-                    GithubModInfo::new_custom("dima74/factorio-multimod-example", None, "Mod2".to_owned()).unwrap(),
+                    GithubModInfo {
+                        owner: "dima74".to_owned(),
+                        repo: "factorio-multimod-example".to_owned(),
+                        locale_path: "Mod1/locale".to_owned(),
+                        crowdin_name: Some("Name1".to_owned()),
+                    },
+                    GithubModInfo {
+                        owner: "dima74".to_owned(),
+                        repo: "factorio-multimod-example".to_owned(),
+                        locale_path: "Mod3/Data/locale".to_owned(),
+                        crowdin_name: Some("Name3".to_owned()),
+                    },
                 ],
                 weekly_update_from_crowdin: true,
                 branch: None,

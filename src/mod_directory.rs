@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use log::error;
+use log::{error, warn};
 use tempfile::TempDir;
 
 use crate::{crowdin, util};
@@ -47,7 +47,12 @@ impl ModDirectory {
     }
 
     pub fn check_structure(&self) -> bool {
-        self.check_for_locale_folder() && self.check_translation_files_match_english_files(true)
+        if !self.check_for_locale_folder() {
+            warn!("[add-repository] [{}] Missing `locale/en`", &self.mod_info);
+            return false;
+        }
+        
+        self.check_translation_files_match_english_files(true)
     }
 
     pub fn check_for_locale_folder(&self) -> bool {
@@ -67,10 +72,9 @@ impl ModDirectory {
                         language_code,
                         file_name
                     );
+                    error!("{}", &message);
                     if report_sentry {
                         sentry_report_error(&message);
-                    } else {
-                        error!("{}", message);
                     }
                     return false;
                 }
