@@ -92,8 +92,8 @@ pub async fn get_repo_info(
             Ok(locale_en_items) if !locale_en_items.is_empty() => {
                 Ok(GithubRepoInfo::new_single_mod(full_name))
             }
-            _ => { 
-                Err(GetRepoInfoError::LocaleEnDirectoryMissingOrEmpty) 
+            _ => {
+                Err(GetRepoInfoError::LocaleEnDirectoryMissingOrEmpty)
             }
         }
     }
@@ -213,6 +213,10 @@ fn check_create_pull_request_response(result: octocrab::Result<PullRequest>, ful
         // PR exists - no need to reopen, force push is enough
         return;
     }
+    if is_error_repository_archived(&err) {
+        // Ignore archived repositories, can't create PRs for them
+        return;
+    }
     panic!("[{}] Can't create pull request: {}", full_name, err);
 }
 
@@ -223,6 +227,11 @@ fn is_error_pull_request_already_exists(error: &Error) -> bool {
     let serde_json::Value::Object(error) = error else { return false; };
     let Some(serde_json::Value::String(message)) = error.get("message") else { return false; };
     message.starts_with("A pull request already exists for")
+}
+
+fn is_error_repository_archived(error: &Error) -> bool {
+    let error_str = format!("{}", error);
+    error_str.contains("Repository was archived so is read-only")
 }
 
 pub async fn get_default_branch(installation_api: &Octocrab, full_name: &str) -> String {
