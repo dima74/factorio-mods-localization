@@ -58,6 +58,11 @@ If push to master is not allowed:
 * Get authorized user using https://api.github.com/user
 * Compare with <owner>, if matches trigger update
 
+## Public API to trigger update with shared secret
+* Request `/api/triggerUpdateWithSecret?repo=OWNER/REPO&secret=...`
+* Load secret by `OWNER` from `WEBSERVER_SECRET_PUBLIC` JSON map
+* If secret matches, trigger update
+
 ## Notes
 * Any localization folder (such as `/locale/en`, `/locale/ru`) may contain subfolder, and we should ignore subfolders, because factorio ignores them too. Here is [example](https://github.com/Karosieben/boblocale/tree/master/locale/en/old).
 

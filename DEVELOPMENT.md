@@ -4,6 +4,7 @@
 * `/triggerUpdate?secret=X` - Update all repositories
 * `/triggerUpdate?secret=X&repo=REPO` - Update specific repository
 * `/api/triggerUpdate?repo=REPO` - Public API for updating specific repository with GitHub OAuth
+* `/api/triggerUpdateWithSecret?repo=REPO&secret=X` - Public API for updating specific repository with per-user secret
 * `/importRepository?secret=X&repo=REPO` - Readd repository to Crowdin (both english files and translations)
 * `/importEnglish?secret=X&repo=REPO` - Overwrites english files on Crowdin based on GitHub
 
@@ -59,6 +60,7 @@ From https://diralik.sentry.io/settings/projects/factorio-mods-localization/keys
 
 * `RUST_LOG` - "fml=info"
 * `WEBSERVER_SECRET` - any string for `/triggerUpdate` route
+* `WEBSERVER_SECRET_PUBLIC` - JSON map for `/api/triggerUpdateWithSecret` route. Example: `{"user1": "secret1", "user2": "secret2"}`
 
 
 ## GitHub Apps

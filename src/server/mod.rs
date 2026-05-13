@@ -12,6 +12,7 @@ mod debug_routes;
 mod example_error_routes;
 mod trigger_update;
 mod trigger_update_public;
+mod trigger_update_public_with_secret;
 pub mod webhook_util;
 
 #[get("/")]
@@ -43,6 +44,7 @@ pub async fn main() {
         trigger_update::trigger_update,
         trigger_update_public::trigger_update,
         trigger_update_public::trigger_update2,
+        trigger_update_public_with_secret::trigger_update,
         version,
         debug_routes::import_repository,
         debug_routes::import_english,

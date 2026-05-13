@@ -73,6 +73,12 @@ Now you can perform an update manually using the following URL:
 https://factorio-mods-localization.fly.dev/api/triggerUpdate?repo=OWNER/REPO
 ```
 
+For automation without OAuth redirect, use:
+```
+https://factorio-mods-localization.fly.dev/api/triggerUpdateWithSecret?repo=OWNER/REPO&secret=YOUR_SECRET
+```
+To get a secret, send me a private message.
+
 ### Configuration: Specify branch
 It is possible to use some other branch instead of the default branch. To do so, add `"branch"` option to the [config](#configuration). 
 
