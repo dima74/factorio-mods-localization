@@ -23,7 +23,6 @@ const TRIGGER_UPDATE_IGNORED_REPOSITORIES: &[&str] = &[
     //  Large repository, causes OOM for some reason
     //  https://github.com/dima74/factorio-mods-localization/issues/25
     "robot256/cargo_ships",
-    "jingleheimer-schmidt/status_bars",
 ];
 
 #[get("/triggerUpdate?<repo>&<subpath>&<secret>")]
