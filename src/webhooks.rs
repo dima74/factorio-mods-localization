@@ -19,10 +19,15 @@ pub async fn webhook_impl(event: WebhookEvent) {
             handle_installation_event(event).await;
         }
         Push(payload) => {
+            let repository = event.repository.unwrap();
+            if repository.private == Some(true) {
+                info!("[push-webhook] private repository ignored");
+                return;
+            }
             let EventInstallation::Minimal(installation) = event.installation.as_ref().unwrap() else {
                 panic!("Unexpected installation data");
             };
-            let full_name = event.repository.unwrap().full_name.unwrap();
+            let full_name = repository.full_name.unwrap();
             on_push_event(&payload, installation.id, full_name).await;
         }
         // TODO InstallationTarget event (user changed login)
