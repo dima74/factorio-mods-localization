@@ -23,6 +23,10 @@ const TRIGGER_UPDATE_IGNORED_REPOSITORIES: &[&str] = &[
     //  Large repository, causes OOM for some reason
     //  https://github.com/dima74/factorio-mods-localization/issues/25
     "robot256/cargo_ships",
+    // TODO:
+    //  Large repository (~100 MB), causes OOM. Need to implement partial/sparse checkouts
+    //  https://github.com/jingleheimer-schmidt/status_bars
+    "jingleheimer-schmidt/status_bars",
 ];
 
 #[get("/triggerUpdate?<repo>&<subpath>&<secret>")]
