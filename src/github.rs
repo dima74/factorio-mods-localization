@@ -3,7 +3,8 @@ use std::path::Path;
 use std::time::Duration;
 
 use jsonwebtoken::EncodingKey;
-use log::info;
+use http::StatusCode;
+use log::{info, warn};
 use octocrab::{Error, Octocrab, Page};
 use octocrab::models::{AppId, Installation, InstallationId, Repository};
 use octocrab::models::pulls::PullRequest;
@@ -205,6 +206,81 @@ pub async fn create_pull_request(personal_api: &Octocrab, full_name: &str, base_
         .maintainer_can_modify(true)
         .send().await;
     check_create_pull_request_response(result, full_name);
+}
+
+#[derive(Deserialize)]
+struct PullRequestSettings {
+    has_pull_requests: bool,
+    pull_request_creation_policy: Option<String>,
+}
+
+pub async fn is_pull_request_creation_allowed(personal_api: &Octocrab, full_name: &str) -> bool {
+    let url = format!("/repos/{}", full_name);
+    let settings: PullRequestSettings = match personal_api.get(&url, None::<&()>).await {
+        Ok(settings) => settings,
+        Err(error) => {
+            warn!(
+                "[{}] skipping PR creation because repository PR settings could not be fetched: {}",
+                full_name,
+                error
+            );
+            return false;
+        }
+    };
+
+    if !settings.has_pull_requests {
+        warn!(
+            "[{}] skipping PR creation because pull requests are disabled",
+            full_name
+        );
+        return false;
+    }
+
+    match settings.pull_request_creation_policy.as_deref() {
+        Some("all") => true,
+        Some("collaborators_only") => is_user_collaborator(personal_api, full_name).await,
+        policy => {
+            warn!(
+                "[{}] skipping PR creation because pull_request_creation_policy is missing or unsupported: {:?}",
+                full_name,
+                policy
+            );
+            false
+        }
+    }
+}
+
+async fn is_user_collaborator(personal_api: &Octocrab, full_name: &str) -> bool {
+    let url = format!("/repos/{}/collaborators/{}", full_name, GITHUB_USER_NAME);
+    match personal_api._get(&url).await {
+        Ok(response) if response.status() == StatusCode::NO_CONTENT => true,
+        Ok(response) if response.status() == StatusCode::NOT_FOUND => {
+            warn!(
+                "[{}] skipping PR creation because {} is not a collaborator",
+                full_name,
+                GITHUB_USER_NAME
+            );
+            false
+        }
+        Ok(response) => {
+            warn!(
+                "[{}] skipping PR creation because collaborator check for {} returned HTTP {}",
+                full_name,
+                GITHUB_USER_NAME,
+                response.status()
+            );
+            false
+        }
+        Err(error) => {
+            warn!(
+                "[{}] skipping PR creation because collaborator check for {} failed: {}",
+                full_name,
+                GITHUB_USER_NAME,
+                error
+            );
+            false
+        }
+    }
 }
 
 fn check_create_pull_request_response(result: octocrab::Result<PullRequest>, full_name: &str) {
