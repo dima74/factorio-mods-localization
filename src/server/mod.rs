@@ -28,8 +28,11 @@ fn webhook(event: GithubEvent) {
 }
 
 #[get("/version")]
-fn version() -> &'static str {
-    env!("CARGO_PKG_VERSION")
+fn version() -> String {
+    std::env::var("GIT_COMMIT")
+        .ok()
+        .filter(|commit| !commit.is_empty())
+        .unwrap_or_else(|| "unknown".to_owned())
 }
 
 fn check_secret(secret: Option<String>) -> bool {

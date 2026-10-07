@@ -6,5 +6,7 @@ FROM archlinux
 RUN pacman -Sy --noconfirm git && rm -rf /var/cache/pacman/pkg/*
 COPY --from=builder ./target/release/fml ./target/release/fml
 COPY --from=builder Rocket.toml Rocket.toml
+ARG GIT_COMMIT=unknown
+ENV GIT_COMMIT=$GIT_COMMIT
 ENV RUST_BACKTRACE 1
 CMD ["/target/release/fml"]

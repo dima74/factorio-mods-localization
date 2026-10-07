@@ -19,7 +19,8 @@ fly launch
 
 * Deploy from local
 ```sh
-fly deploy --image-label $(git rev-parse HEAD)
+GIT_COMMIT="$(git rev-parse HEAD)"
+fly deploy --image-label "$GIT_COMMIT" --build-arg "GIT_COMMIT=$GIT_COMMIT"
 ```
 
 * Deploy from github
